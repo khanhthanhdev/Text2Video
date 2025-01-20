@@ -38,4 +38,10 @@ ENV/
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Manim output
+media/
+media/videos/
+*.mp4
+*.gif 
