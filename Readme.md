@@ -1,9 +1,78 @@
+# DeepSeek-Manim Animation Generator
 
+## Author's Note
 
+I originally wrote this repository before DeepSeek published their official API. As such, you can ignore the Colab notebook and Hugging Face model download instructions - they're obsolete now that DeepSeek has released their API!
+
+## Quick Start
+
+1. Clone this repository
+2. Create a `.env` file and add your DeepSeek API key:
+   ```
+   DEEPSEEK_API_KEY=your_api_key_here
+   ```
+3. Install requirements:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Run the Gradio interface:
+   ```bash
+   python app.py
+   ```
+5. Use the chat interface to ask DeepSeek to create any Manim animation
+6. Copy the returned Python script to a new .py file
+7. Run the animation using Manim's CLI
+
+## Running Manim Animations
+
+### Basic Command Structure
+```bash
+python -m manim [flags] your_script.py SceneName
+```
+
+### Quality Options
+- `-ql` (480p, fastest, best for development)
+- `-qm` (720p, good balance)
+- `-qh` (1080p, high quality)
+- `-qk` (4K, very high quality)
+
+### Preview Options
+- `-p` Preview the animation when done
+- `-f` Show the output file in file browser
+
+### Output Formats
+- Default: MP4
+- `-i` Output as GIF
+- `--format VIDEO` Choose format (mp4, mov, gif, webm)
+
+### Output Location
+All rendered animations are saved in:
+```
+media/videos/[script_name]/[quality]/[scene_name].[format]
+```
+
+### Development Tips
+1. Use `-pql` during development for quick previews
+2. Use `-qh` for final renders
+3. Add `-f` to easily locate output files
+4. Use `--format gif` for easily shareable animations
+
+For example:
+```bash
+# During development
+python -m manim -pql your_script.py YourScene
+
+# Final render
+python -m manim -qh your_script.py YourScene
+```
+
+---
+
+# Original Documentation Below
 
 ## **Animating QED with Manim: A Test Case of Open Models**
 
-**DeepSeek R1-Zero** is a custom, instruction-tuned large language model (LLM) designed for advanced reasoning and knowledge completion tasks. Although it derives conceptual inspiration from Google’s T5 framework, it features **substantial architectural modifications** allowing for an extended context window, refined attention mechanisms, and robust performance across zero-shot and few-shot paradigms.
+**DeepSeek R1-Zero** is a custom, instruction-tuned large language model (LLM) designed for advanced reasoning and knowledge completion tasks. Although it derives conceptual inspiration from Google's T5 framework, it features **substantial architectural modifications** allowing for an extended context window, refined attention mechanisms, and robust performance across zero-shot and few-shot paradigms.
 
 ---
 
@@ -28,16 +97,16 @@
 DeepSeek R1-Zero represents the culmination of **multi-year research** at DeepSeek AI into **transfer learning**, **instruction tuning**, and **long-context neural architectures**. Its central objective is to provide a single, all-purpose encoder-decoder model that can handle:
 
 - **Complex reading comprehension** (up to 8,192 tokens)  
-- **Scenario-based instruction following** (e.g., “Given a set of constraints, produce a short plan.”)  
+- **Scenario-based instruction following** (e.g., "Given a set of constraints, produce a short plan.")  
 - **Technical and coding tasks** (including code generation, transformation, and debugging assistance)  
 
-Though R1-Zero is a “descendant” of T5, the modifications to attention, context management, and parameter initialization distinguish it significantly from vanilla T5 implementations.
+Though R1-Zero is a "descendant" of T5, the modifications to attention, context management, and parameter initialization distinguish it significantly from vanilla T5 implementations.
 
 ---
 
 ## **2. Philosophical & Theoretical Foundations**
 
-While standard Transformer models rely on the “Attention is All You Need” paradigm (Vaswani et al., 2017), **DeepSeek R1-Zero** extends this by:
+While standard Transformer models rely on the "Attention is All You Need" paradigm (Vaswani et al., 2017), **DeepSeek R1-Zero** extends this by:
 
 1. **Expanded Context Window**  
    - By employing distributed positional encodings and segment-based attention, R1-Zero tolerates sequences up to 8,192 tokens.  
@@ -45,13 +114,13 @@ While standard Transformer models rely on the “Attention is All You Need” pa
 
 2. **Instruction Tuning**  
    - Similar to frameworks like FLAN-T5 or InstructGPT, R1-Zero was exposed to curated prompts (instructions, Q&A, conversation) to improve zero-shot and few-shot performance.  
-   - This approach helps the model produce more stable, context-aware answers and reduces “hallucination” events.
+   - This approach helps the model produce more stable, context-aware answers and reduces "hallucination" events.
 
 3. **Semantic Compression**  
-   - The encoder can compress textual segments into “semantic slots,” enabling more efficient cross-attention in the decoder stage.  
+   - The encoder can compress textual segments into "semantic slots," enabling more efficient cross-attention in the decoder stage.  
    - This is theoretically grounded in **Manifold Hypothesis** arguments, where the textual input can be seen as lying on a lower-dimensional manifold, thus amenable to a compressed representation.
 
-From a **cognitive science** perspective, R1-Zero aspires to mimic a layered approach to knowledge assimilation, balancing short-term “working memory” (sequence tokens) with long-term “knowledge representation” (model parameters).
+From a **cognitive science** perspective, R1-Zero aspires to mimic a layered approach to knowledge assimilation, balancing short-term "working memory" (sequence tokens) with long-term "knowledge representation" (model parameters).
 
 ---
 
@@ -60,7 +129,7 @@ From a **cognitive science** perspective, R1-Zero aspires to mimic a layered app
 ### **3.1 Summary of Structural Modifications**
 
 - **Parameter Count**: ~6.7B  
-- **Encoder-Decoder**: Maintains T5’s text-to-text approach but with specialized gating and partial reordering in cross-attention blocks.  
+- **Encoder-Decoder**: Maintains T5's text-to-text approach but with specialized gating and partial reordering in cross-attention blocks.  
 - **Context Window**: 8,192 tokens (a 4× expansion over many standard T5 models).  
 - **Layer Stacking**: The modifications allow some dynamic scheduling of attention heads, facilitating better throughput in multi-GPU environments.
 
@@ -96,7 +165,7 @@ Below are **simplified** instructions for installing DeepSeek R1-Zero:
 pip install --upgrade torch transformers accelerate bitsandbytes
 ```
 
-If your environment’s default PyTorch is older than 2.0, consider updating or installing from PyPI/conda channels that provide a recent version.
+If your environment's default PyTorch is older than 2.0, consider updating or installing from PyPI/conda channels that provide a recent version.
 
 ### **4.3 Model Download**
 
@@ -163,7 +232,7 @@ model_4bit = AutoModelForSeq2SeqLM.from_pretrained(
 
 ### **6.2 Extended Context Mechanism**
 
-- **Rotary & Segment Encodings**: At large sequence lengths, standard absolute positions can degrade performance. R1-Zero’s hybrid approach (inspired by [T5], [LongT5], and [RoFormer]) helps maintain stable gradients even at 8k tokens.  
+- **Rotary & Segment Encodings**: At large sequence lengths, standard absolute positions can degrade performance. R1-Zero's hybrid approach (inspired by [T5], [LongT5], and [RoFormer]) helps maintain stable gradients even at 8k tokens.  
 - **Parallel Cross-Attention**: The decoder employs a specialized parallel cross-attention mechanism in certain layers, which can reduce overhead in multi-GPU setups.
 
 ---
@@ -187,11 +256,11 @@ Keep in mind that your hardware setup and parallelism strategies can influence t
 
 ## **8. Potential Limitations & Future Work**
 
-Despite R1-Zero’s strengths, several **limitations** persist:
+Despite R1-Zero's strengths, several **limitations** persist:
 
 1. **Token Context Limit**: 8,192 tokens is high, but certain extreme use cases (e.g., full-text searching in large documents) may require bridging or chunking.  
 2. **Training Biases**: While instruction-tuning reduces hallucinations, domain gaps remain. For heavily specialized or newly emerging knowledge, the model may produce uncertain or dated information.  
-3. **Interpretability**: Like all Transformer-based LLMs, R1-Zero functions as a “black box.” Advanced interpretability tools are still an active research area.
+3. **Interpretability**: Like all Transformer-based LLMs, R1-Zero functions as a "black box." Advanced interpretability tools are still an active research area.
 
 **Future Directions**:  
 - Integrating advanced memory systems to handle prompts beyond 8k tokens.  
@@ -202,7 +271,7 @@ Despite R1-Zero’s strengths, several **limitations** persist:
 
 ## **9. Usage Examples**
 
-Below are a few quick examples to illustrate R1-Zero’s capabilities:
+Below are a few quick examples to illustrate R1-Zero's capabilities:
 
 ### **9.1 Short Story Generation**
 
@@ -228,15 +297,15 @@ Feel free to refine these prompts and tune generation parameters (`num_beams`, `
 
 ## **10. Citation**
 
-If you like this example for research or academic endeavors, please cite it!
+If you use this project in your research or work, please cite it as:
 
 ```bibtex
-@misc{deepseek2023r1zero,
-    title={Animating QED with Manim: A Test Case of Open Models},
-    author={Christian H. Cooper}, 
-    year={2025}, 
-    howpublished={\url{https://huggingface.co/deepseek-ai/DeepSeek-R1-Zero}},
-    note={See also author's Google Scholar profile: \url{https://scholar.google.com/citations?user=F8DLLi0AAAAJ&hl=en}}
+@misc{cooper2025deepseekmanim,
+    title={DeepSeek-Manim Animation Generator: Automated Mathematical Animations using DeepSeek API},
+    author={Cooper, Christian H.},
+    year={2025},
+    howpublished={\url{https://github.com/HarleyCoops/Deepseek-R1-Zero}},
+    note={A tool for generating Manim animations using DeepSeek's API}
 }
 ```
 
