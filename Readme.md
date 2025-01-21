@@ -6,7 +6,7 @@ I originally wrote this repository before DeepSeek published their official API.
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=chrispiech/TextToManim&type=Date)](https://star-history.com/#chrispiech/TextToManim&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=HarleyCoops/DeepSeek-Manim-Animation-Generator&type=Date)](https://star-history.com/#HarleyCoops/DeepSeek-Manim-Animation-Generator&Date)
 
 ## Quick Start
 
