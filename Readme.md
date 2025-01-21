@@ -4,6 +4,10 @@
 
 I originally wrote this repository before DeepSeek published their official API. As such, you can ignore the Colab notebook and Hugging Face model download instructions - they're obsolete now that DeepSeek has released their API!
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=chrispiech/TextToManim&type=Date)](https://star-history.com/#chrispiech/TextToManim&Date)
+
 ## Quick Start
 
 1. Clone this repository
