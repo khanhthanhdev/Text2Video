@@ -33,6 +33,8 @@ The `SceneName` must match the name of the scene class defined in your script. F
 ```bash
 python -m manim [flags] QED.py QEDJourney
 ```
+You can choose to use docker to render a manim scene : `docker run --rm -it -v "/path/to/repo/Deepseek-R1-Zero:/manim" manimcommunity/manim manim -qm QED.py QEDJourney` 
+https://docs.manim.community/en/stable/installation/docker.html
 
 ### Quality Options
 - `-ql` (480p, fastest, best for development)
