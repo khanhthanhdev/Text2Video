@@ -34,7 +34,7 @@ class QEDJourney(ThreeDScene):
           8. Feynman Diagram w/ electron lines & photon
           9. Coupling Constant alpha (~1/137) + symbolic form
           10. 2D Graph of Running Coupling
-          11. Final Zoom Out & Collage with “Finis”
+          11. Final Zoom Out & Collage with "Finis"
         """
 
         # CONFIGURE THE CAMERA to have a slight tilt/angle:
@@ -141,7 +141,8 @@ class QEDJourney(ThreeDScene):
         ############################################################################
         # We'll move the camera to the origin for a close-up on wave fields
         self.stop_ambient_camera_rotation()
-        self.play(self.camera.animate.shift(UP * 2 + IN * 5), run_time=2)
+        self.camera.frame.shift(UP * 2 + IN * 5)
+        self.wait(2)
 
         # Create a wave for E and B fields in 3D
         # We use ParametricFunction for a sine wave traveling along z-axis,
