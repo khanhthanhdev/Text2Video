@@ -44,6 +44,20 @@ python -m manim [flags] QED.py QEDJourney
 - `-p` Preview the animation when done
 - `-f` Show the output file in file browser
 
+### Partial Rendering
+When debugging or resuming after an error, you can render specific parts of your animation:
+```bash
+# Start from a specific animation number
+python -m manim -qh --from-animation 11 your_script.py SceneName
+
+# Render a specific range of animations
+python -m manim -qh --from-animation 11 --upto-animation 15 your_script.py SceneName
+```
+This is particularly useful for:
+- Resuming after errors without re-rendering everything
+- Debugging specific sections of your animation
+- Saving time during development
+
 ### Output Formats
 - Default: MP4
 - `-i` Output as GIF
