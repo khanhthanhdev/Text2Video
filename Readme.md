@@ -178,6 +178,29 @@ Below are **simplified** instructions for installing DeepSeek R1-Zero:
 - **Transformers** >= 4.34.0  
 - **Accelerate** >= 0.24.0  
 - **bitsandbytes** >= 0.39.0 (if using 4-bit/8-bit)
+- **FFmpeg** (required for video rendering)
+
+### **4.1.1 Installing FFmpeg**
+
+FFmpeg is required for Manim to render animations. Here's how to install it:
+
+#### Windows:
+1. Download from https://www.gyan.dev/ffmpeg/builds/ 
+   - Recommended: "ffmpeg-release-essentials.7z"
+2. Extract the archive
+3. Add the `bin` folder to your system PATH
+   - Or install via package manager: `choco install ffmpeg`
+
+#### Linux:
+```bash
+sudo apt-get update
+sudo apt-get install ffmpeg
+```
+
+#### macOS:
+```bash
+brew install ffmpeg
+```
 
 ### **4.2 Installing via `pip`**
 
