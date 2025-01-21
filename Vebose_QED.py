@@ -141,7 +141,7 @@ class QEDJourney(ThreeDScene):
         ############################################################################
         # We'll move the camera to the origin for a close-up on wave fields
         self.stop_ambient_camera_rotation()
-        self.camera.frame.shift(UP * 2 + IN * 5)
+        self.move_camera(frame_center=self.camera.frame_center + UP * 2 + IN * 5)
         self.wait(2)
 
         # Create a wave for E and B fields in 3D
@@ -177,8 +177,7 @@ class QEDJourney(ThreeDScene):
         propagation_arrow = Arrow3D(
             start=axes.c2p(0, 0, -wave_length),
             end=axes.c2p(0, 0, wave_length),
-            color=YELLOW,
-            buff=0
+            color=YELLOW
         ).set_stroke(width=4)
         prop_label = Tex("Propagation (z-axis)").set_color(YELLOW)
         prop_label.next_to(propagation_arrow.get_end(), UP + RIGHT)
