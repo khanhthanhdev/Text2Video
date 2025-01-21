@@ -27,6 +27,19 @@ I originally wrote this repository before DeepSeek published their official API.
 6. Copy the returned Python script to a new .py file
 7. Run the animation using Manim's CLI
 
+## Local APP Features
+
+### Real-time Reasoning Display
+The chat interface now shows the AI's reasoning process in real-time! As you interact with the model, you'll see:
+- A gray box above each response showing the model's chain of thought
+- The final response below the reasoning
+- Both updating in real-time as the model thinks
+
+This feature helps you understand how the AI arrives at its conclusions. The reasoning window shows the intermediate steps and thought process before the final answer is given.
+
+Example interaction:
+
+
 ## Running Manim Animations
 
 ### Basic Command Structure
@@ -355,6 +368,8 @@ If you use this project in your research or work, please cite it as:
     note={A tool for generating Manim animations using DeepSeek's API}
 }
 ```
+
+
 
 
 
