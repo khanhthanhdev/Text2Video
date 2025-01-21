@@ -37,7 +37,7 @@ The chat interface now shows the AI's reasoning process in real-time! As you int
 
 This feature helps you understand how the AI arrives at its conclusions. The reasoning window shows the intermediate steps and thought process before the final answer is given.
 
-Example interaction:
+
 
 
 ## Running Manim Animations
