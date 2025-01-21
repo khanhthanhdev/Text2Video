@@ -29,6 +29,10 @@ I originally wrote this repository before DeepSeek published their official API.
 ```bash
 python -m manim [flags] your_script.py SceneName
 ```
+The `SceneName` must match the name of the scene class defined in your script. For example, in my case, R1 returned a class called `class QEDJourney(ThreeDScene):`, then you would use:
+```bash
+python -m manim [flags] QED.py QEDJourney
+```
 
 ### Quality Options
 - `-ql` (480p, fastest, best for development)
@@ -59,11 +63,11 @@ media/videos/[script_name]/[quality]/[scene_name].[format]
 
 For example:
 ```bash
-# During development
-python -m manim -pql your_script.py YourScene
+# During development (preview QEDJourney scene from QED.py in low quality)
+python -m manim -pql QED.py QEDJourney
 
-# Final render
-python -m manim -qh your_script.py YourScene
+# Final render (render QEDJourney scene from QED.py in high quality)
+python -m manim -qh QED.py QEDJourney
 ```
 
 ---
