@@ -1,3 +1,58 @@
+Here's a restructured README focusing on the animation scene guide while preserving technical details in collapsible sections:
+
+# DeepSeek-Manim Animation Generator
+
+[![Star History Chart](https://api.star-history.com/svg?repos=HarleyCoops/DeepSeek-Manim-Animation-Generator&type=Date)](https://star-history.com/#HarleyCoops/DeepSeek-Manim-Animation-Generator&Date)
+
+## Benamou-Brenier-Wasserstein Animation Scene Guide
+
+**Inspiration**: Developed from [Gabriel Peyré's tweet](https://x.com/gabreyre/status/1881220110096236731) demonstrating optimal transport concepts.
+
+**Collaboration**: Scene design was jointly reasoned through by #DeepSeek and #Google AI systems.
+
+### PDF Scene Guide
+```latex
+% Generate with:
+% pdflatex Benamou-Brenier-Wasserstein.tex
+\documentclass{article}
+\usepackage{tikz}
+\begin{document}
+\begin{figure}[h]
+  \centering
+  \begin{tikzpicture}
+    % TikZ code for animation frames
+    \node at (0,0) {Frame 1: Initial Density};
+    \node at (4,0) {Frame 2: Intermediate Flow};
+    \node at (8,0) {Frame 3: Final Transport};
+  \end{tikzpicture}
+  \caption{Wasserstein geodesics visualization sequence}
+\end{figure}
+\end{document}
+```
+
+## Quick Start
+
+1. **Clone & Setup**
+   ```bash
+   git clone https://github.com/HarleyCoops/DeepSeek-Manim-Animation-Generator
+   cd DeepSeek-Manim-Animation-Generator
+   ```
+
+2. **API Configuration**
+   ```bash
+   echo "DEEPSEEK_API_KEY=your_key_here" > .env
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Launch Interface**
+   ```bash
+   python app.py
+   ```
+
 # DeepSeek-Manim Animation Generator
 
 ## Author's Note
@@ -40,18 +95,32 @@ This feature helps you understand how the AI arrives at its conclusions. The rea
 
 
 
-## Running Manim Animations
+## Running the Benamou-Brenier-Wasserstein Animation
 
-### Basic Command Structure
+### 1. Generate the Scene Guide PDF
+First, compile the LaTeX scene guide:
 ```bash
-python -m manim [flags] your_script.py SceneName
+# Navigate to the project directory
+cd DeepSeek-Manim-Animation-Generator
+
+# Compile the LaTeX file
+pdflatex Benamou-Brenier-Wasserstein.tex
 ```
-The `SceneName` must match the name of the scene class defined in your script. For example, in my case, R1 returned a class called `class QEDJourney(ThreeDScene):`, then you would use:
+This will generate `Benamou-Brenier-Wasserstein.pdf`, which contains the visual guide for the animation sequence.
+
+### 2. Run the Manim Animation
+After reviewing the scene guide, you can render the animation using Manim:
+
 ```bash
-python -m manim [flags] QED.py QEDJourney
+# For development/preview (480p with preview)
+python -m manim -pql CosmicProbabilityScene.py CosmicProbabilityScene
+
+# For final render (1080p high quality)
+python -m manim -qh CosmicProbabilityScene.py CosmicProbabilityScene
+
+# For creating a shareable GIF
+python -m manim -qm --format gif CosmicProbabilityScene.py CosmicProbabilityScene
 ```
-You can choose to use docker to render a manim scene : `docker run --rm -it -v "/path/to/repo/Deepseek-R1-Zero:/manim" manimcommunity/manim manim -qm QED.py QEDJourney` 
-https://docs.manim.community/en/stable/installation/docker.html
 
 ### Quality Options
 - `-ql` (480p, fastest, best for development)
@@ -59,33 +128,14 @@ https://docs.manim.community/en/stable/installation/docker.html
 - `-qh` (1080p, high quality)
 - `-qk` (4K, very high quality)
 
-### Preview Options
+### Additional Rendering Options
 - `-p` Preview the animation when done
 - `-f` Show the output file in file browser
 
-### Partial Rendering
-When debugging or resuming after an error, you can render specific parts of your animation:
-```bash
-# Start from a specific animation number
-python -m manim -qh --from-animation 11 your_script.py SceneName
-
-# Render a specific range of animations
-python -m manim -qh --from-animation 11 --upto-animation 15 your_script.py SceneName
-```
-This is particularly useful for:
-- Resuming after errors without re-rendering everything
-- Debugging specific sections of your animation
-- Saving time during development
-
-### Output Formats
-- Default: MP4
-- `-i` Output as GIF
-- `--format VIDEO` Choose format (mp4, mov, gif, webm)
-
 ### Output Location
-All rendered animations are saved in:
+The rendered animation will be saved in:
 ```
-media/videos/[script_name]/[quality]/[scene_name].[format]
+media/videos/CosmicProbabilityScene/[quality]/CosmicProbabilityScene.[format]
 ```
 
 ### Development Tips
@@ -104,8 +154,6 @@ python -m manim -qh QED.py QEDJourney
 ```
 
 ---
-
-# Original Documentation Below
 
 ## **Animating QED with Manim: A Test Case of Open Models**
 
