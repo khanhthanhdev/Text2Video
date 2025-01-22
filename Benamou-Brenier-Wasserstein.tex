@@ -2,6 +2,7 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\usepackage{hyperref}
 
 \title{Scene Guide to Diffusion Models and Optimal Transport Animation - Enhanced Explanations}
 \author{Based on work by Christian H. Cooper}
@@ -12,7 +13,7 @@
 \maketitle
 
 \begin{abstract}
-This document provides detailed explanations for the mathematical animations created using the DeepSeek-Manim Animation Generator. The animations visualize concepts from optimal transport theory and diffusion models.
+This document provides detailed explanations for the mathematical animations created using the DeepSeek-Manim Animation Generator. The animations visualize concepts from optimal transport theory and diffusion models, inspired entirely by Gabriel Peyré's tweet (\url{https://x.com/gabrielpeyre/status/1881220110096236731}). This work demonstrates how a single tweet containing mathematical concepts can be expanded into comprehensive visual explanations.
 \end{abstract}
 
 \section*{Scene 1: Introducing the Cosmic Distributions - \( \alpha_0 \) and \( \alpha_1 \)}
@@ -51,7 +52,7 @@ Imagine a \textbf{time dial} (a number line with a moving dot labeled "Time t") 
 
 Even the \textbf{color of the particles} in the bridge changes smoothly – from pure blue at the beginning, through shades of green and yellow, to finally pure gold at the end. This visual change perfectly mirrors the idea of \textbf{mixing} or \textbf{blending} the two original galaxies. Above this evolving bridge, a mathematical formula appears: \( \alpha_t = ((1 - t)P_0 + tP_1)_{\#} (\alpha_0 \otimes \alpha_1) \).  This equation is the mathematical rule that describes this beautiful, dynamic transformation.
 
-\subsection*{Equation and Concept Explanation: (For the Layperson)}
+\subsection*{Equation and Concept Explanation: }
 
 The formula you see on screen,
 \[
@@ -97,7 +98,7 @@ At the same time, a subtle \textbf{energy diagram} pops up in the corner (axes w
 
 Next to these dynamic visuals, at the top right, you'll see the \textbf{Continuity Equation}: \( \text{div}(\alpha_t \nu_t) + \partial_t \alpha_t = 0 \). Below the flowing streamlines, another, more complex-looking equation appears: \( \min_{\nu_t} \left\{ \int \|\nu_t\|_{L^2(\alpha_t)}^2 \, dt \ : \ \text{div}(\alpha_t \nu_t) + \partial_t \alpha_t = 0 \right\} \).  This is the equation that describes \textbf{Optimal Transport}.
 
-\subsection*{Equations and Concept Explanation: (For the Layperson)}
+\subsection*{Equations and Concept Explanation: }
 
 This scene is all about \textbf{Optimal Transport} – finding the most efficient way to move things around. Let's understand the equations shown in this scene:
 
@@ -156,7 +157,7 @@ A numerical value, \textbf{\( W_2^2(\alpha_0, \alpha_1) \)}, appears and starts 
 
 Above all this activity, the equation for \textbf{Wasserstein Distance} is shown: \( W_2^2(\alpha_0, \alpha_1) = \inf_{T_1} \left\{ \int \|x - T_1(x)\|^2 \, d\alpha_0(x) \ : \ (T_1)_\# \alpha_0 = \alpha_1 \right\} \).
 
-\subsection*{Equation and Concept Explanation: (For the Layperson)}
+\subsection*{Equation and Concept Explanation: }
 
 This scene introduces \textbf{Wasserstein Distance}, a way to measure how "far apart" two probability distributions (like our galaxies) are.  The key equation is:
 \[

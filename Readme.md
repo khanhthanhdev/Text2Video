@@ -79,6 +79,16 @@ pdflatex Benamou-Brenier-Wasserstein.tex
 ```
 This will generate `Benamou-Brenier-Wasserstein.pdf`, which contains the visual guide for the animation sequence.
 
+### Pre-rendered Scene Guide
+For convenience, I've included a pre-rendered version of the scene guide: [Benamou-Brenier-Wasserstein.pdf](Benamou-Brenier-Wasserstein.pdf)
+
+This comprehensive guide includes:
+- Detailed explanations of each animation scene
+- Mathematical concepts broken down into intuitive metaphors
+- Visual descriptions of the cosmic probability distributions
+- Step-by-step breakdowns of the optimal transport equations
+- Inspiration credit to [Gabriel Peyré's tweet](https://x.com/gabrielpeyre/status/1881220110096236731)
+
 ### 2. Run the Manim Animation
 After reviewing the scene guide, you can render the animation using Manim:
 
