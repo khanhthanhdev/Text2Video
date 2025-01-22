@@ -1,4 +1,3 @@
-Here's a restructured README focusing on the animation scene guide while preserving technical details in collapsible sections:
 
 # DeepSeek-Manim Animation Generator
 
