@@ -1,6 +1,6 @@
 # DeepSeek-Manim Animation Generator
 
-[![Star History Chart](https://api.star-history.com/svg?repos=HarleyCoops/DeepSeek-Manim-Animation-Generator&type=Date)](https://star-history.com/#HarleyCoops/DeepSeek-Manim-Animation-Generator&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=harleycoops/deepseek-manim-animation-generator&type=Date)](https://star-history.com/#harleycoops/deepseek-manim-animation-generator&Date)
 
 ## Benamou-Brenier-Wasserstein Animation Scene Guide
 
