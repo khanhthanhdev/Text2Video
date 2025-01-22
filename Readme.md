@@ -1,4 +1,3 @@
-
 # DeepSeek-Manim Animation Generator
 
 [![Star History Chart](https://api.star-history.com/svg?repos=HarleyCoops/DeepSeek-Manim-Animation-Generator&type=Date)](https://star-history.com/#HarleyCoops/DeepSeek-Manim-Animation-Generator&Date)
@@ -52,31 +51,10 @@
    python app.py
    ```
 
-# DeepSeek-Manim Animation Generator
-
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=HarleyCoops/DeepSeek-Manim-Animation-Generator&type=Date)](https://star-history.com/#HarleyCoops/DeepSeek-Manim-Animation-Generator&Date)
-
-## Quick Start
-
-1. Clone this repository
-2. Create a `.env` file and add your DeepSeek API key:
-   ```
-   DEEPSEEK_API_KEY=your_api_key_here
-   ```
-3. Install requirements:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Run the Gradio interface:
-   ```bash
-   python app.py
-   ```
-5. Use the chat interface to ask DeepSeek to create any Manim animation
-6. Copy the returned Python script to a new .py file
-7. Run the animation using Manim's CLI
+5. **Use the Interface**
+   - Use the chat interface to ask DeepSeek to create any Manim animation
+   - Copy the returned Python script to a new .py file
+   - Run the animation using Manim's CLI
 
 ## Local APP Features
 
@@ -87,9 +65,6 @@ The chat interface now shows the AI's reasoning process in real-time! As you int
 - Both updating in real-time as the model thinks
 
 This feature helps you understand how the AI arrives at its conclusions. The reasoning window shows the intermediate steps and thought process before the final answer is given.
-
-
-
 
 ## Running the Benamou-Brenier-Wasserstein Animation
 
