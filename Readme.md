@@ -55,9 +55,6 @@ Here's a restructured README focusing on the animation scene guide while preserv
 
 # DeepSeek-Manim Animation Generator
 
-## Author's Note
-
-I originally wrote this repository before DeepSeek published their official API. As such, you can ignore the Colab notebook and Hugging Face model download instructions - they're obsolete now that DeepSeek has released their API!
 
 ## Star History
 
