@@ -203,10 +203,9 @@ class InformationGeometryScene(ThreeDScene):
         
         self.play(
             FadeIn(final_eq),
-            self.camera.animate.set_euler_angles(theta=0, phi=0),
             run_time=4
         )
-        self.wait(3)
+        self.move_camera(theta=0, phi=0, run_time=4)
         
         # Cosmic fade out
         self.play(
