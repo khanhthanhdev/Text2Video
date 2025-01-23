@@ -1,5 +1,4 @@
 
----
 
 # Math-To-Manim
 
