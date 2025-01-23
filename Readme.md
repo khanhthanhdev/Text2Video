@@ -2,6 +2,145 @@
 
 [![Star History Chart](https://api.star-history.com/svg?repos=HarleyCoops/DeepSeek-Manim-Animation-Generator&type=Date)](https://star-history.com/#HarleyCoops/DeepSeek-Manim-Animation-Generator&Date)
 
+## Project Overview
+
+This project uses DeepSeek AI to generate mathematical animations using Manim in one shot through model refinement and training. It includes various examples of complex mathematical concepts visualized through animation. The intent here is attempt to automatically chart concepts that far exceede most humans, myself included, in a one-shot animation. 
+
+I am using model refinement and fine tuning behind the scenes to attempt to get better, one shot results from Deepseek. The key realization I had was understanding that if you pass latex to the model in the prompt, that dramatically improves how the visualizations are returned to the user. 
+
+The model is *not yet* a fine-tuned version of [DeepSeek's R1 Zero](https://huggingface.co/deepseek-ai/DeepSeek-R1-Zero) but I am working on that. Most errors you will get attempting animations in one shot will be related to how latex is being interpreted as a formula to be rendered on the screen or part of the code itself. 
+
+An interesting new development is now the capacity to generate simulatious "study notes" that accompany each animation with a complete explanation of the math and context of the animation. The Benamou anmiation and notes were the first attempt at this. 
+
+## Directory Structure
+
+```
+.
+├── app.py                           # Main application interface
+├── text_to_manim.py                # Core animation generation logic
+├── requirements.txt                 # Project dependencies
+├── .env                            # Environment configuration
+│
+├── Animations/
+│   ├── CosmicProbabilityScene.py   # Cosmic probability visualization
+│   ├── ElectroweakSymmetryScene.py # Electroweak symmetry animation
+│   ├── QED.py                      # Quantum Electrodynamics scenes
+│   ├── diffusion_ot.py            # Diffusion Optimal Transport
+│   └── pythagorean.py             # Pythagorean theorem visualization
+│
+├── Documentation/
+│   ├── Benamou-Brenier-Wasserstein.md   # BBW concept explanation
+│   ├── Benamou-Brenier-Wasserstein.tex  # LaTeX documentation
+│   ├── GoogleBBW.md                     # Google's BBW implementation
+│   └── ElectroweakMeaning.md           # Electroweak theory explanation
+│
+└── media/                          # Generated animation outputs
+```
+
+## Quick Start
+
+1. **Clone & Setup**
+   ```bash
+   git clone https://github.com/HarleyCoops/DeepSeek-Manim-Animation-Generator
+   cd DeepSeek-Manim-Animation-Generator
+   ```
+
+2. **Environment Setup**
+   ```bash
+   # Create and configure .env file with your API key
+   echo "DEEPSEEK_API_KEY=your_key_here" > .env
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   ```
+
+3. **Install FFmpeg**
+   - **Windows**: 
+     - Download from https://www.gyan.dev/ffmpeg/builds/
+     - Add to PATH or use: `choco install ffmpeg`
+   - **Linux**: `sudo apt-get install ffmpeg`
+   - **macOS**: `brew install ffmpeg`
+
+4. **Launch Interface**
+   ```bash
+   python app.py
+   ```
+
+## Available Animations
+
+### 1. Benamou-Brenier-Wasserstein (BBW)
+- **Source**: `CosmicProbabilityScene.py`
+- **Documentation**: `Benamou-Brenier-Wasserstein.md`
+- **Render Command**:
+  ```bash
+  python -m manim -qh CosmicProbabilityScene.py CosmicProbabilityScene
+  ```
+
+### 2. Electroweak Symmetry
+- **Source**: `ElectroweakSymmetryScene.py`
+- **Documentation**: `ElectroweakMeaning.md`
+- **Render Command**:
+  ```bash
+  python -m manim -qh ElectroweakSymmetryScene.py ElectroweakSymmetryScene
+  ```
+
+### 3. Quantum Electrodynamics (QED)
+- **Source**: `QED.py`, `Verbose_QED.py`
+- **Render Command**:
+  ```bash
+  python -m manim -qh QED.py QEDScene
+  ```
+
+## Rendering Options
+
+### Quality Settings
+- `-ql` : 480p (development)
+- `-qm` : 720p (medium quality)
+- `-qh` : 1080p (high quality)
+- `-qk` : 4K (ultra high quality)
+
+### Additional Flags
+- `-p` : Preview animation
+- `-f` : Show output file
+- `--format gif` : Export as GIF
+
+### Output Location
+Rendered animations are saved in:
+```
+media/videos/[SceneName]/[quality]/[SceneName].[format]
+```
+
+## Development Tips
+
+1. Use `-pql` for rapid development:
+   ```bash
+   python -m manim -pql YourScene.py YourSceneName
+   ```
+
+2. For final renders use `-qh`:
+   ```bash
+   python -m manim -qh YourScene.py YourSceneName
+   ```
+
+## Documentation
+
+Each animation comes with corresponding documentation:
+- `.md` files contain concept explanations
+- `.tex` files provide mathematical details
+- Generated PDFs offer visual guides
+
+## Citation
+
+```bibtex
+@misc{cooper2025deepseekmanim,
+    title={DeepSeek-Manim Animation Generator: Automated Mathematical Animations using DeepSeek API},
+    author={Cooper, Christian H.},
+    year={2025},
+    howpublished={\url{https://github.com/HarleyCoops/Deepseek-R1-Zero}},
+    note={A tool for generating Manim animations using DeepSeek's API}
+}
+```
+
 ## Benamou-Brenier-Wasserstein Animation Scene Guide
 
 **Inspiration**: Developed from [Gabriel Peyré's tweet](https://x.com/gabreyre/status/1881220110096236731) demonstrating optimal transport concepts.
@@ -27,34 +166,6 @@
 \end{figure}
 \end{document}
 ```
-
-## Quick Start
-
-1. **Clone & Setup**
-   ```bash
-   git clone https://github.com/HarleyCoops/DeepSeek-Manim-Animation-Generator
-   cd DeepSeek-Manim-Animation-Generator
-   ```
-
-2. **API Configuration**
-   ```bash
-   echo "DEEPSEEK_API_KEY=your_key_here" > .env
-   ```
-
-3. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Launch Interface**
-   ```bash
-   python app.py
-   ```
-
-5. **Use the Interface**
-   - Use the chat interface to ask DeepSeek to create any Manim animation
-   - Copy the returned Python script to a new .py file
-   - Run the animation using Manim's CLI
 
 ## Local APP Features
 
