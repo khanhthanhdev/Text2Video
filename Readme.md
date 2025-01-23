@@ -6,18 +6,19 @@
 
 ## Project Overview
 
-This project uses DeepSeek AI to generate mathematical animations using Manim in one shot through model refinement and training. It includes various examples of complex mathematical concepts visualized through animation. The intent here is attempt to automatically chart concepts that far exceeds most humans capcity to visualize complex connections across math and physics in a one-shot animation. 
+This project uses DeepSeek AI to generate mathematical animations using Manim in one shot through model refinement and training. It includes various examples of complex mathematical concepts visualized through animation. The intent here is to attempt to automatically chart concepts that far exceed most humans' capacity to visualize complex connections across math and physics in a one-shot animation. 
 
 **Technical Breakthroughs**:
-- **LaTeX Anchoring**: Base prompt engineering technique yielding 62% better code accuracy
-- **Dual-Stream Output**: Simultaneous animation code + study notes generation
-- **Error Resiliency**: 38% of malformed Manim code auto-corrected through model introspection
+- **LaTeX Anchoring**: Base prompt engineering technique yielding 62% better code accuracy.
+- **Dual-Stream Output**: Simultaneous animation code + study notes generation.
+- **Error Resiliency**: 38% of malformed Manim code auto-corrected through model introspection.
 
-I am using model refinement and fine tuning behind the scenes to attempt to get better, one shot results from Deepseek. The key realization I had was understanding that if you pass latex to the model in the prompt, that dramatically improves how the visualizations are returned to the user. 
+I am using model refinement and fine-tuning behind the scenes to attempt to get better, one-shot results from DeepSeek. The key realization I had was understanding that if you pass LaTeX to the model in the prompt, that dramatically improves how the visualizations are returned to the user. 
 
-The model is *not yet* a fine-tuned version of [DeepSeek's R1 Zero](https://huggingface.co/deepseek-ai/DeepSeek-R1-Zero) but I am working on that. Most errors you will get attempting animations in one shot will be related to how latex is being interpreted as a formula to be rendered on the screen or part of the code itself. 
+The model is *not yet* a fully fine-tuned version of [DeepSeek's R1 Zero](https://huggingface.co/deepseek-ai/DeepSeek-R1-Zero), but I am working on that. Most errors you will encounter when attempting animations on your own in one shot will be related to how LaTeX is being interpreted as a formula to be rendered on the screen or as part of the code itself. 
 
-An interesting new development is now the capacity to generate simulatious "study notes" that accompany each animation with a complete explanation of the math and context of the animation. The Benamou anmiation and notes were the first attempt at this. 
+An interesting new development is the capacity to generate simultaneous "study notes" that accompany each animation with a complete explanation of the math and context of the animation. The Benamou animation and notes were the first attempt at this.
+
 
 ---
 
