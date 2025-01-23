@@ -1,10 +1,10 @@
 
 
-# Math-To-Manim
+# Math-To-Manim 
 
 [![Star History Chart](https://api.star-history.com/svg?repos=harleycoops/deepseek-manim-animation-generator&type=Date)](https://star-history.com/#harleycoops/deepseek-manim-animation-generator&Date)
 
-## Project Overview
+## Project Overview 
 
 This project uses DeepSeek AI to generate mathematical animations using Manim in one shot through model refinement and training. It includes various examples of complex mathematical concepts visualized through animation. The intent here is to attempt to automatically chart concepts that far exceed most humans' capacity to visualize complex connections across math and physics in a one-shot animation. 
 
