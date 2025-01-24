@@ -609,6 +609,56 @@ If you use this project in your research or work, please cite it as:
 }
 ```
 
+---
+
+## Handling Large Media Files
+
+This repository uses Git Large File Storage (Git LFS) to handle large media files like GIFs. Here's how to work with large media files:
+
+### Setup Git LFS
+
+1. Install Git LFS:
+   ```bash
+   git lfs install
+   ```
+
+2. Track GIF files:
+   ```bash
+   git lfs track "*.gif"
+   ```
+
+3. Add and commit the `.gitattributes` file:
+   ```bash
+   git add .gitattributes
+   git commit -m "chore: Add Git LFS tracking for GIF files"
+   ```
+
+### Adding New Media Files
+
+1. Place GIF files in their designated directory (e.g., `SpatialReasoningTest/`)
+
+2. Update `.gitignore` to allow GIFs in specific directories:
+   ```
+   # Ignore GIFs except in specific directories
+   *.gif
+   !SpatialReasoningTest/*.gif
+   ```
+
+3. Add and commit the files:
+   ```bash
+   git add your-directory/*.gif
+   git commit -m "feat: Add new animation GIFs"
+   git push
+   ```
+
+### Verification
+
+- Check tracked files: `git lfs ls-files`
+- Verify status: `git status`
+- Check file tracking patterns: `git lfs track`
+
+
+
 
 
 
