@@ -44,4 +44,7 @@ Thumbs.db
 media/
 media/videos/
 *.mp4
-*.gif 
+
+# Ignore GIFs except in SpatialReasoningTest
+*.gif
+!SpatialReasoningTest/*.gif 
