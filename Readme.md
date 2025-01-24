@@ -167,16 +167,13 @@ The resurgence of prompting sophistication has become evident in my latest exper
 
 Both DeepSeek and OpenAI Pro were tasked with this challenge, and their approaches reveal interesting insights into their reasoning processes:
 
-<div style="display: flex; justify-content: space-between;">
-  <div style="flex: 1; text-align: center;">
-    <p><strong>DeepSeek's Approach</strong></p>
-    <img src="SpatialReasoningTest/DeepSeek_LShape3D_ManimCE_v0.19.0.gif" alt="DeepSeek's 3D Visualization" width="400"/>
-  </div>
-  <div style="flex: 1; text-align: center;">
-    <p><strong>OpenAI Pro's Approach</strong></p>
-    <img src="SpatialReasoningTest/OpenAI_SteppedShape_ManimCE_v0.19.0.gif" alt="OpenAI Pro's 3D Visualization" width="400"/>
-  </div>
-</div>
+**DeepSeek's Approach:**
+
+![DeepSeek's 3D Visualization](SpatialReasoningTest/DeepSeek_LShape3D_ManimCE_v0.19.0.gif)
+
+**OpenAI Pro's Approach:**
+
+![OpenAI Pro's 3D Visualization](SpatialReasoningTest/OpenAIPro_SteppedShape_ManimCE_v0.19.0.gif)
 
 While both models produced interesting but technically incorrect interpretations, the key finding isn't in their accuracy but in their approach. DeepSeek took a methodical, layer-by-layer construction approach, while OpenAI Pro attempted to reason through the spatial relationships in a similar systematic manner.
 
