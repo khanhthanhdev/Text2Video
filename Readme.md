@@ -1,5 +1,3 @@
-
-
 # Math-To-Manim 
 
 [![Star History Chart](https://api.star-history.com/svg?repos=harleycoops/deepseek-manim-animation-generator&type=Date)](https://star-history.com/#harleycoops/deepseek-manim-animation-generator&Date)
@@ -111,6 +109,16 @@ An interesting new development is the capacity to generate simultaneous "study n
   ```bash
   python -m manim -qh QED.py QEDScene
   ```
+
+### 4. Gale-Shapley Algorithm
+- **Source**: `gale-shaply.py`
+- **Documentation**: See `/docs` for detailed formula explanations
+- **Render Command**:
+  ```bash
+  python -m manim -qh gale-shaply.py GaleShapleyVisualization
+  ```
+
+**Note**: The current implementation focuses on mathematical formulas and bipartite matching visualization. Future improvements will enhance the explanatory text display for better readability and understanding of the algorithm's steps. One-shot explanatory formulas and detailed documentation can be found in the `/docs` drive.
 
 **New Feature**: Try `--format webm` for modern video compression
 
