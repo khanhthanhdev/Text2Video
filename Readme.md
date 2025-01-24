@@ -161,6 +161,30 @@ media/videos/[SceneName]/[quality]/[SceneName].[format]
 
 **Debugging Aid**: Set `LOG_LEVEL=DEBUG` in .env for detailed generation logs
 
+## Spatial Reasoning Test
+
+The resurgence of prompting sophistication has become evident in my latest experiments. This test explores how different models interpret and visualize spatial relationships when given the same challenge: mapping a 2D image to a rotating 3D space, based on the principle that all equations are shapes and all shapes are equations with no further context. Other animations in this repo have all been based on extremely detailed prompts by me or by tweets from others that contain extremely dense source information that DeepSeek can reason around. 
+
+Both DeepSeek and OpenAI Pro were tasked with this challenge, and their approaches reveal interesting insights into their reasoning processes:
+
+<div style="display: flex; justify-content: space-between;">
+  <div style="flex: 1; text-align: center;">
+    <p><strong>DeepSeek's Approach</strong></p>
+    <img src="SpatialReasoningTest/DeepSeek_LShape3D_ManimCE_v0.19.0.gif" alt="DeepSeek's 3D Visualization" width="400"/>
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <p><strong>OpenAI Pro's Approach</strong></p>
+    <img src="SpatialReasoningTest/OpenAI_SteppedShape_ManimCE_v0.19.0.gif" alt="OpenAI Pro's 3D Visualization" width="400"/>
+  </div>
+</div>
+
+While both models produced interesting but technically incorrect interpretations, the key finding isn't in their accuracy but in their approach. DeepSeek took a methodical, layer-by-layer construction approach, while OpenAI Pro attempted to reason through the spatial relationships in a similar systematic manner.
+
+This experiment is part of a broader investigation into solving mathematics and spatial reasoning problems from the [Humanity's Last Exam (HLE)](https://github.com/centerforaisafety/hle) repository. The key insight gained is that prompting sophistication has become paramount again - when provided with detailed contextual information, DeepSeek in particular shows remarkable improvements in its visualization capabilities.
+
+**Source Image:**
+<img src="SpatialReasoningTest/ReasoningSourceFile.jpg" alt="Source Image for 3D Visualization" width="400"/>
+
 ---
 
 ## Documentation
