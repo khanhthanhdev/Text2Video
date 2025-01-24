@@ -209,9 +209,9 @@ class InformationGeometryScene(ThreeDScene):
         
         self.play(
             FadeIn(final_eq),
-            self.camera.animate.set_euler_angles(theta=0, phi=0),
             run_time=4
         )
+        self.camera.set_euler_angles(theta=0, phi=0)
         self.wait(3)
         
         self.play(
