@@ -122,6 +122,23 @@ An interesting new development is the capacity to generate simultaneous "study n
 
 **New Feature**: Try `--format webm` for modern video compression
 
+### 6. Rhombicosidodecahedron Animations
+- **Source**: Located in `Rhombicosidodecahedron/` directory
+- **Animations**:
+  1. `bouncing.py` - Complex 3D bouncing transformations
+  2. `flythroughbouncing.py` - Flythrough camera perspective of the bouncing animation
+- **Render Commands**:
+  ```bash
+  # For bouncing animation
+  python -m manim -qh Rhombicosidodecahedron/bouncing.py RhombicosidodecahedronScene
+  
+  # For flythrough perspective
+  python -m manim -qh Rhombicosidodecahedron/flythroughbouncing.py FlythroughScene
+  ```
+- **Note**: These are not one-shot files but rather complex renderings in R1 inspired by [this tweet](https://x.com/_akhaliq/status/1882985442691437006), showcasing sophisticated 3D geometric visualizations
+
+**New Feature**: Try `--format webm` for modern video compression
+
 ---
 
 ## Rendering Options
