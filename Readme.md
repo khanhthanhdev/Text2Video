@@ -1,6 +1,6 @@
 # Math-To-Manim 
 
-[![Star History Chart](https://api.star-history.com/svg?repos=harleycoops/deepseek-manim-animation-generator&type=Date)](https://star-history.com/#harleycoops/deepseek-manim-animation-generator&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=HarleyCoops/Math-To-Manim&type=Date)](https://star-history.com/#HarleyCoops/Math-To-Manim&Date)
 
 ## Project Overview 
 
@@ -17,6 +17,39 @@ The model is *not yet* a fully fine-tuned version of [DeepSeek's R1 Zero](https:
 
 An interesting new development is the capacity to generate simultaneous "study notes" that accompany each animation with a complete explanation of the math and context of the animation. The Benamou animation and notes were the first attempt at this.
 
+
+---
+
+## Quick Start
+
+1. **Clone & Setup**
+   ```bash
+   git clone https://github.com/HarleyCoops/Math-To-Manim
+   cd Math-To-Manim
+   ```
+
+2. **Environment Setup**
+   ```bash
+   # Create and configure .env file with your API key
+   echo "DEEPSEEK_API_KEY=your_key_here" > .env
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   ```
+
+3. **Install FFmpeg**
+   - **Windows**: 
+     - Download from https://www.gyan.dev/ffmpeg/builds/
+     - Add to PATH or use: `choco install ffmpeg`
+   - **Linux**: `sudo apt-get install ffmpeg`
+   - **macOS**: `brew install ffmpeg`
+
+4. **Launch Interface**
+   ```bash
+   python app.py
+   ```
+
+**Performance Tip**: For faster installs, use `pip install -r requirements.txt --no-cache-dir`
 
 ---
 
@@ -49,39 +82,6 @@ An interesting new development is the capacity to generate simultaneous "study n
 - **LaTeX→Manim Bridge**: Regex-based sanitization of mathematical expressions
 - **Animation Validation**: Automated scene graph analysis pre-render
 - **Documentation Engine**: Markdown/LaTeX dual-output system
-
----
-
-## Quick Start
-
-1. **Clone & Setup**
-   ```bash
-   git clone https://github.com/HarleyCoops/DeepSeek-Manim-Animation-Generator
-   cd DeepSeek-Manim-Animation-Generator
-   ```
-
-2. **Environment Setup**
-   ```bash
-   # Create and configure .env file with your API key
-   echo "DEEPSEEK_API_KEY=your_key_here" > .env
-   
-   # Install dependencies
-   pip install -r requirements.txt
-   ```
-
-3. **Install FFmpeg**
-   - **Windows**: 
-     - Download from https://www.gyan.dev/ffmpeg/builds/
-     - Add to PATH or use: `choco install ffmpeg`
-   - **Linux**: `sudo apt-get install ffmpeg`
-   - **macOS**: `brew install ffmpeg`
-
-4. **Launch Interface**
-   ```bash
-   python app.py
-   ```
-
-**Performance Tip**: For faster installs, use `pip install -r requirements.txt --no-cache-dir`
 
 ---
 
@@ -285,7 +285,7 @@ def show_reasoning(thought_process):
 First, compile the LaTeX scene guide:
 ```bash
 # Navigate to the project directory
-cd DeepSeek-Manim-Animation-Generator
+cd Math-To-Manim
 
 # Compile the LaTeX file
 pdflatex Benamou-Brenier-Wasserstein.tex
