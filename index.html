@@ -74,6 +74,13 @@
             margin-bottom: 30px;
             text-align: center;
         }
+        .mobile-notice {
+            display: none;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin: 10px 0;
+        }
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -82,7 +89,19 @@
                 grid-template-columns: 1fr;
             }
             .pdf-viewer {
-                height: 500px;
+                display: none;
+            }
+            .mobile-notice {
+                display: block;
+            }
+            .pdf-item {
+                padding: 15px;
+            }
+            .pdf-link {
+                margin-top: 10px;
+            }
+            body {
+                padding: 10px;
             }
         }
     </style>
@@ -92,6 +111,7 @@
         <div class="header">
             <h1>Math to Manim Documentation</h1>
             <p>Access our collection of mathematical documentation and algorithms:</p>
+            <p class="mobile-notice">For the best viewing experience, please use the "Open in New Tab" button on mobile devices.</p>
         </div>
         
         <ul class="pdf-list">
@@ -99,40 +119,40 @@
                 <div class="pdf-content">
                     <h2>Quantum Prompt Documentation</h2>
                     <p>Documentation for quantum computing prompts and algorithms.</p>
-                    <iframe src="docs/quantumprompt.pdf" class="pdf-viewer"></iframe>
-                    <a href="docs/quantumprompt.pdf" class="pdf-link" target="_blank">Open in New Tab</a>
+                    <iframe src="docs/quantumprompt.pdf" class="pdf-viewer" title="Quantum Prompt Documentation"></iframe>
+                    <a href="docs/quantumprompt.pdf" class="pdf-link" target="_blank" rel="noopener">Open in New Tab</a>
                 </div>
             </li>
             <li class="pdf-item">
                 <div class="pdf-content">
                     <h2>Benamou-Brenier Wasserstein</h2>
                     <p>Mathematical documentation on the Benamou-Brenier formulation of Wasserstein distance.</p>
-                    <iframe src="docs/Benamou-Brenier-Wasserstein.pdf" class="pdf-viewer"></iframe>
-                    <a href="docs/Benamou-Brenier-Wasserstein.pdf" class="pdf-link" target="_blank">Open in New Tab</a>
+                    <iframe src="docs/Benamou-Brenier-Wasserstein.pdf" class="pdf-viewer" title="Benamou-Brenier Documentation"></iframe>
+                    <a href="docs/Benamou-Brenier-Wasserstein.pdf" class="pdf-link" target="_blank" rel="noopener">Open in New Tab</a>
                 </div>
             </li>
             <li class="pdf-item">
                 <div class="pdf-content">
                     <h2>Information Geometry</h2>
                     <p>Documentation on Information Geometry implementations.</p>
-                    <iframe src="docs/Information_Geometry_py.pdf" class="pdf-viewer"></iframe>
-                    <a href="docs/Information_Geometry_py.pdf" class="pdf-link" target="_blank">Open in New Tab</a>
+                    <iframe src="docs/Information_Geometry_py.pdf" class="pdf-viewer" title="Information Geometry Documentation"></iframe>
+                    <a href="docs/Information_Geometry_py.pdf" class="pdf-link" target="_blank" rel="noopener">Open in New Tab</a>
                 </div>
             </li>
             <li class="pdf-item">
                 <div class="pdf-content">
                     <h2>ProLip Documentation</h2>
                     <p>Documentation for the ProLip library.</p>
-                    <iframe src="docs/ProLip_py.pdf" class="pdf-viewer"></iframe>
-                    <a href="docs/ProLip_py.pdf" class="pdf-link" target="_blank">Open in New Tab</a>
+                    <iframe src="docs/ProLip_py.pdf" class="pdf-viewer" title="ProLip Documentation"></iframe>
+                    <a href="docs/ProLip_py.pdf" class="pdf-link" target="_blank" rel="noopener">Open in New Tab</a>
                 </div>
             </li>
             <li class="pdf-item">
                 <div class="pdf-content">
                     <h2>Gale-Shapley Algorithm</h2>
                     <p>Documentation on the Gale-Shapley matching algorithm.</p>
-                    <iframe src="docs/gale_shaply.pdf" class="pdf-viewer"></iframe>
-                    <a href="docs/gale_shaply.pdf" class="pdf-link" target="_blank">Open in New Tab</a>
+                    <iframe src="docs/gale_shaply.pdf" class="pdf-viewer" title="Gale-Shapley Documentation"></iframe>
+                    <a href="docs/gale_shaply.pdf" class="pdf-link" target="_blank" rel="noopener">Open in New Tab</a>
                 </div>
             </li>
         </ul>
