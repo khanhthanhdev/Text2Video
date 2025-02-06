@@ -191,6 +191,11 @@ Each animation comes with corresponding documentation:
 - `.tex` files provide mathematical details
 - Generated PDFs offer visual guides
 
+### Available Documentation
+- [View QED Documentation (PDF)](https://github.com/HarleyCoops/Math-To-Manim/blob/main/docs/QwenQED.pdf)
+- [Download QED Documentation (PDF)](https://github.com/HarleyCoops/Math-To-Manim/raw/main/docs/QwenQED.pdf)
+- [Benamou-Brenier-Wasserstein.pdf](Benamou-Brenier-Wasserstein.pdf)
+
 **Example Documentation Pipeline**:
 ```mermaid
 graph LR
