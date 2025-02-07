@@ -1,5 +1,6 @@
 from manim import *
 import numpy as np
+import random
 
 class GravitationalWaveSymphony(ThreeDScene):
     def construct(self):
@@ -23,8 +24,8 @@ class GravitationalWaveSymphony(ThreeDScene):
             star.add_updater(lambda m, dt: m.set_opacity(0.5 + 0.5*np.sin(dt*5)))
 
         # Slow panning camera movement
-        self.camera.frame.save_state()
-        self.camera.frame.shift(UP*2 + LEFT*3)
+        initial_center = ORIGIN
+        self.move_camera(frame_center=UP*2 + LEFT*3, run_time=0.1)  # Small but non-zero duration
 
         # Gradual star appearance
         star_anim = LaggedStartMap(
@@ -34,17 +35,20 @@ class GravitationalWaveSymphony(ThreeDScene):
             rate_func=linear
         )
 
+        # Play the star animation
+        self.play(star_anim)
+
         # Title sequence
         title = Text("Cosmic Ripples", font_size=72).set_color_by_gradient(BLUE_B, TEAL)
         subtitle = Text("A Gravitational Wave Journey", font_size=36).next_to(title, DOWN)
 
-        # Animate section 1
-        self.play(star_anim, run_time=10)
+        # First move the camera back
+        self.move_camera(frame_center=initial_center, run_time=2)
+        # Then play the text animations
         self.play(
-            Restore(self.camera.frame),
             Write(title, run_time=3),
             FadeIn(subtitle, shift=DOWN),
-            run_time=8
+            run_time=3
         )
         self.wait(5)
         self.play(FadeOut(title), FadeOut(subtitle), run_time=3)
@@ -70,7 +74,8 @@ class GravitationalWaveSymphony(ThreeDScene):
         def spacetime_warp(mob):
             t = wave_tracker.get_value()
             r = resonance.get_value()
-            for point in mob.get_points():
+            points = mob.get_points().copy()  # Create a copy of points
+            for i, point in enumerate(points):
                 x, y, _ = point
                 d = np.sqrt(x**2 + y**2)
 
@@ -85,8 +90,8 @@ class GravitationalWaveSymphony(ThreeDScene):
                 # Nonlinear resonance
                 dx3 = 0.1*r**2 * np.exp(-d/4) * np.sin(2*t)
 
-                point[0] += dx1 + dx2 + dx3
-                point[1] += dy1 + dy2
+                points[i] = point + np.array([dx1 + dx2 + dx3, dy1 + dy2, 0])
+            mob.set_points(points)
 
         spacetime.add_updater(spacetime_warp)
 
@@ -122,7 +127,7 @@ class GravitationalWaveSymphony(ThreeDScene):
                 rate_func=rate_functions.ease_in_out_sine,
                 run_time=15
             ),
-            resonance.animate.set_value(2).shift(UP*2),
+            resonance.animate.set_value(2),
             spacetime.animate.set_color(interpolate_color(BLUE_E, PURPLE_A, 0.5)),
             run_time=15
         )
@@ -168,9 +173,17 @@ class GravitationalWaveSymphony(ThreeDScene):
         self.wait(15)
 
     def mollweide_projection(self, u, v):
-        # Mollweide projection formula
+        # Mollweide projection formula with bounds checking
+        # Ensure inputs are within valid ranges
+        u = np.clip(u, -PI, PI)
+        v = np.clip(v, -PI/2, PI/2)
+
         theta = u
-        phi = np.arcsin((2*v + np.sin(2*v)) / np.pi)
+        # Add numerical stability to phi calculation
+        arg = (2*v + np.sin(2*v)) / np.pi
+        arg = np.clip(arg, -1, 1)  # Ensure argument is in valid range for arcsin
+        phi = np.arcsin(arg)
+
         x = 2 * np.sqrt(2) * (theta - np.pi) * np.cos(phi) / np.pi
         y = np.sqrt(2) * np.sin(phi)
         z = 0
@@ -183,3 +196,8 @@ class GravitationalWaveSymphony(ThreeDScene):
             (np.array([-1.5, 1.5, 0]), np.array([-2, 2, 0])),
             # Add more lines as needed
         ]
+
+# To render the scene, use the following command in your terminal:
+# python -m manim -pql Mistral_gravity_wave.py GravitationalWaveSymphony
+# For higher quality:
+# python -m manim -pqh Mistral_gravity_wave.py GravitationalWaveSymphony  # 1080p60
