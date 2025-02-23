@@ -4,19 +4,15 @@
 
 ## Project Overview 
 
-This project uses DeepSeek AI to generate mathematical animations using Manim in one shot through model refinement and training. It includes various examples of complex mathematical concepts visualized through animation. The intent here is to attempt to automatically chart concepts that far exceed most humans' capacity to visualize complex connections across math and physics in a one-shot animation. 
+This project uses DeepSeek AI (and some Google Gemini) to generate mathematical animations using Manim with better prompts. It includes various examples of complex mathematical concepts visualized through animation. The intent here is to attempt to automatically chart concepts that far exceed most humans' capacity to visualize complex connections across math and physics in a one-shot animation.
 
-**Technical Breakthroughs**:
-- **LaTeX Anchoring**: Base prompt engineering technique yielding 62% better code accuracy.
-- **Dual-Stream Output**: Simultaneous animation code + study notes generation.
-- **Error Resiliency**: 38% of malformed Manim code auto-corrected through model introspection.
+**Technical Insight**:
+- **LaTeX Matters**: Base prompt engineering technique yielding much better results for displaying formulas on screen.
+- **Dual-Stream Output**: Simultaneous animation code + study notes generation. No model fine tuning necessary. Just pass any working python scene script back as a prompt and ask for "verbose explanations fully rendered as latext study notes.." and you will get working latex that renders into a PDF set at Overleaf. .
 
-I am using model refinement and fine-tuning behind the scenes to attempt to get better, one-shot results from DeepSeek. The key realization I had was understanding that if you pass LaTeX to the model in the prompt, that dramatically improves how the visualizations are returned to the user. 
+The model is *not yet* a fully fine-tuned version of [DeepSeek's R1 Zero](https://huggingface.co/deepseek-ai/DeepSeek-R1-Zero), but I am working on that (Still working on this, better prompting still works best). Most errors you will encounter when attempting animations on your own in one shot will be related to how LaTeX is being interpreted as a formula to be rendered on the screen or as part of the code itself. 
 
-The model is *not yet* a fully fine-tuned version of [DeepSeek's R1 Zero](https://huggingface.co/deepseek-ai/DeepSeek-R1-Zero), but I am working on that. Most errors you will encounter when attempting animations on your own in one shot will be related to how LaTeX is being interpreted as a formula to be rendered on the screen or as part of the code itself. 
-
-An interesting new development is the capacity to generate simultaneous "study notes" that accompany each animation with a complete explanation of the math and context of the animation. The Benamou animation and notes were the first attempt at this.
-
+An interesting new thing to ask for is the capacity to generate simultaneous "study notes" that accompany each animation with a complete explanation of the math and context of the animation. The Benamou animation and notes were the first attempt at this. This also just works straight from the prompt if you pass the scene code directly back to the model.
 
 ---
 
@@ -207,6 +203,11 @@ Each animation comes with corresponding documentation:
 - `.md` files contain concept explanations
 - `.tex` files provide mathematical details
 - Generated PDFs offer visual guides
+
+### Available Documentation
+- [View QED Documentation (PDF)](https://github.com/HarleyCoops/Math-To-Manim/blob/main/docs/QwenQED.pdf)
+- [Download QED Documentation (PDF)](https://github.com/HarleyCoops/Math-To-Manim/raw/main/docs/QwenQED.pdf)
+- [Benamou-Brenier-Wasserstein.pdf](Benamou-Brenier-Wasserstein.pdf)
 
 **Example Documentation Pipeline**:
 ```mermaid
