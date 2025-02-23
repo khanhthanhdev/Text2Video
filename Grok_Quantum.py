@@ -22,9 +22,9 @@ class StarField(VGroup):
 ##############################################################################
 class CosmicOrigins(ThreeDScene):
     def construct(self):
-        # Configure the camera with a cosmic tilt and slight zoom
+        # Configure the camera with a 30-degree angle and zoomed-out view
         self.camera.background_color = BLACK
-        self.set_camera_orientation(phi=70 * DEGREES, theta=-30 * DEGREES, zoom=1.1)
+        self.set_camera_orientation(phi=30 * DEGREES, theta=0 * DEGREES, zoom=1.8)
 
         ############################################################################
         # 1. COSMIC DAWN: STARFIELD AND BIG BANG IGNITION
@@ -40,11 +40,16 @@ class CosmicOrigins(ThreeDScene):
         subtitle = Text("A Journey Through Creation", font_size=36, color=WHITE)
         title_group = VGroup(main_title, subtitle).arrange(DOWN, buff=0.5)
 
+        # Rotate title group 45 degrees left (counterclockwise) and position for diagonal zoom
+        title_group.rotate(-45 * DEGREES, axis=OUT)  # Rotate around z-axis (OUT for 3D)
+        initial_position = UR * 5  # Start far up-right for diagonal zoom
+        title_group.move_to(initial_position)
+
         self.play(FadeIn(star_field, run_time=4), GrowFromCenter(singularity, run_time=2))
         self.play(Write(title_group, run_time=3))
         self.wait(3)  # Let the grandeur settle
         self.play(
-            title_group.animate.scale(0.4).to_corner(UL, buff=0.5),
+            title_group.animate.scale(0.4).rotate(0 * DEGREES, axis=OUT).to_corner(UL, buff=0.5),  # Unrotate for final position
             singularity.animate.scale(15).set_opacity(0),  # Explosive expansion
             star_field.animate.set_opacity(1),
             run_time=3
