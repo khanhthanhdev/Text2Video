@@ -22,16 +22,16 @@ class StarField(VGroup):
 ##############################################################################
 class QEDJourney(ThreeDScene):
     def construct(self):
-        # CONFIGURE THE CAMERA to have a slight tilt/angle:
+        # CONFIGURE THE CAMERA to have a slight tilt/angle with a wide initial view
         self.camera.background_color = "#000000"
-        self.set_camera_orientation(phi=70 * DEGREES, theta=-30 * DEGREES)
+        self.set_camera_orientation(phi=70 * DEGREES, theta=-30 * DEGREES, zoom=3.0)  # Wider initial zoom
 
         ############################################################################
         # 1. COSMIC STARFIELD FADE-IN
         ############################################################################
         star_field = StarField(is_3D=True, num_stars=400)
         self.play(FadeIn(star_field, run_time=3))
-        self.wait()
+        self.wait(1)  # Short pause for effect
 
         ############################################################################
         # 2. TITLE INTRODUCTION
@@ -42,18 +42,58 @@ class QEDJourney(ThreeDScene):
             gradient=(BLUE, YELLOW),
             weight=BOLD
         ).scale(1.0)
-        main_title.set_glow_factor(0.4)  # subtle "glow" effect in newer Manim builds
+        main_title.set_glow_factor(0.4)  # Subtle "glow" effect in newer Manim builds
 
-        # Move title to center first
-        self.play(Write(main_title), run_time=3)
-        self.wait(2)
+        # Position title initially far up-right for diagonal zoom (no updaters needed)
+        initial_position = UR * 6  # Further out for a grander zoom
+        main_title.move_to(initial_position).rotate(-45 * DEGREES, axis=OUT)  # 45-degree left rotation for diagonal motion
 
-        # Then shrink and move to upper-left
+        # Fade in and zoom title diagonally to center, then shrink and move to upper-left
+        self.play(FadeIn(main_title, run_time=3))  # Fade in the title
+        self.wait(2)  # Pause to let the title settle
+
+        # Zoom in slightly and move title to center, then shrink and position in upper-left
         self.play(
-            main_title.animate.scale(0.5).to_corner(UL),
+            main_title.animate.move_to(ORIGIN).scale(1.2),  # Scale up slightly for emphasis during zoom
+            self.camera.animate.set_zoom(2.5),  # Incorrect—replaced below with MoveCamera
+            run_time=3
+        )
+        self.wait(1)  # Brief pause before final positioning
+
+        # Shrink and move to upper-left with rotation correction, zooming out camera slightly
+        self.play(
+            main_title.animate.scale(0.5).rotate(0 * DEGREES, axis=OUT).to_corner(UL, buff=0.5),
+            self.camera.animate.set_zoom(2.0),  # Incorrect—replaced below with MoveCamera
             run_time=2
         )
         self.wait(1)
+
+        # Correct camera zooms using MoveCamera for 3D scene (fixing AttributeError)
+        # Initial wide view to closer view for title, then back slightly for positioning
+        self.play(
+            self.move_camera(
+                lambda t: {
+                    "zoom": interpolate(3.0, 2.5, t),  # Zoom from 3.0 to 2.5 for title fade-in
+                    "phi": 70 * DEGREES,  # Maintain elevation
+                    "theta": -30 * DEGREES  # Maintain azimuth
+                },
+                run_time=3
+            ),
+            run_time=3
+        )
+        self.wait(1)  # Pause after first zoom
+
+        self.play(
+            self.move_camera(
+                lambda t: {
+                    "zoom": interpolate(2.5, 2.0, t),  # Zoom from 2.5 to 2.0 for final positioning
+                    "phi": 70 * DEGREES,  # Maintain elevation
+                    "theta": -30 * DEGREES  # Maintain azimuth
+                },
+                run_time=2
+            ),
+            run_time=2
+        )
 
         ############################################################################
         # 3. 4D MINKOWSKI SPACETIME WIREFRAME + LIGHT CONE

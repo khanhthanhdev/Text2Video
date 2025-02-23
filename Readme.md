@@ -4,11 +4,24 @@
 
 ## Project Overview 
 
-This project uses DeepSeek AI (and some Google Gemini) to generate mathematical animations using Manim with better prompts. It includes various examples of complex mathematical concepts visualized through animation. The intent here is to attempt to automatically chart concepts that far exceed most humans' capacity to visualize complex connections across math and physics in a one-shot animation.
+This project uses DeepSeek AI (and some Google Gemini (and now #Grok3) to generate mathematical animations using Manim with better prompts. It includes various examples of complex mathematical concepts visualized through animation. The intent here is to attempt to automatically chart concepts that far exceed most humans' capacity to visualize complex connections across math and physics in a one-shot animation. The future intent is to use RL to fine tune a model on all the working verbose prompts to arrive at 100% one-shot animations from only text descriptions.
 
 **Technical Insight**:
 - **LaTeX Matters**: Base prompt engineering technique yielding much better results for displaying formulas on screen.
-- **Dual-Stream Output**: Simultaneous animation code + study notes generation. No model fine tuning necessary. Just pass any working python scene script back as a prompt and ask for "verbose explanations fully rendered as latext study notes.." and you will get working latex that renders into a PDF set at Overleaf. .
+- **Dual-Stream Output**: Simultaneous animation code + study notes generation. No model fine tuning necessary. Just pass any working python scene script back as a prompt and ask for "verbose explanations fully rendered as latext study notes.." and you will get working latex that renders into a PDF set at Overleaf.
+
+**Key Features & Innovations**:
+- **Cross-Model Synergy**: Leveraging multiple AI models (DeepSeek, Gemini, Grok3) allows for unique perspectives on mathematical visualization, often catching edge cases a single model might miss.
+- **Educational Impact**: The generated animations serve as powerful teaching tools, breaking down complex mathematical concepts into visually digestible sequences.
+- **Automated Documentation**: The system not only generates animations but also produces comprehensive LaTeX documentation, creating a complete learning package.
+- **Adaptive Complexity**: Can handle everything from basic geometric proofs to advanced topics like quantum mechanics and optimal transport theory.
+- **Interactive Development**: The project includes a feedback loop where successful animations can be used to improve prompt engineering for future generations.
+
+**Real-World Applications**:
+- **Academic Research**: Visualizing complex mathematical proofs and theories
+- **Education**: Creating engaging materials for STEM courses
+- **Scientific Communication**: Bridging the gap between abstract mathematics and visual understanding
+- **Research Validation**: Providing visual verification of mathematical concepts and relationships
 
 The model is *not yet* a fully fine-tuned version of [DeepSeek's R1 Zero](https://huggingface.co/deepseek-ai/DeepSeek-R1-Zero), but I am working on that (Still working on this, better prompting still works best). Most errors you will encounter when attempting animations on your own in one shot will be related to how LaTeX is being interpreted as a formula to be rendered on the screen or as part of the code itself. 
 

@@ -22,9 +22,9 @@ class StarField(VGroup):
 ##############################################################################
 class CosmicOrigins(ThreeDScene):
     def construct(self):
-        # Configure the initial camera with a wide zoom for the star field
+        # Configure the camera with a 30-degree angle and zoomed-out view
         self.camera.background_color = BLACK
-        self.set_camera_orientation(phi=30 * DEGREES, theta=0 * DEGREES, zoom=2.5)  # Wider initial view
+        self.set_camera_orientation(phi=30 * DEGREES, theta=0 * DEGREES, zoom=1.8)
 
         ############################################################################
         # 1. COSMIC DAWN: STARFIELD AND BIG BANG IGNITION
@@ -41,7 +41,7 @@ class CosmicOrigins(ThreeDScene):
         title_group = VGroup(main_title, subtitle).arrange(DOWN, buff=0.5)
 
         # Rotate title group 45 degrees left (counterclockwise) and position for diagonal zoom
-        title_group.rotate(-45 * DEGREES, axis=OUT)  # Rotate around z-axis
+        title_group.rotate(-45 * DEGREES, axis=OUT)  # Rotate around z-axis (OUT for 3D)
         initial_position = UR * 5  # Start far up-right for diagonal zoom
         title_group.move_to(initial_position)
 
@@ -49,33 +49,15 @@ class CosmicOrigins(ThreeDScene):
         self.play(Write(title_group, run_time=3))
         self.wait(3)  # Let the grandeur settle
         self.play(
-            title_group.animate.scale(0.4).rotate(0 * DEGREES, axis=OUT).to_corner(UL, buff=0.5),
+            title_group.animate.scale(0.4).rotate(0 * DEGREES, axis=OUT).to_corner(UL, buff=0.5),  # Unrotate for final position
             singularity.animate.scale(15).set_opacity(0),  # Explosive expansion
             star_field.animate.set_opacity(1),
             run_time=3
         )
-        # Zoom in slightly for title detail using ValueTracker for smooth animation
-        zoom_tracker = ValueTracker(2.5)  # Start with initial zoom
-        self.add_updater(lambda m, dt: self.set_camera_orientation(  # Added dt parameter
-            phi=30 * DEGREES,
-            theta=0 * DEGREES,
-            zoom=zoom_tracker.get_value()
-        ))
-        self.play(
-            zoom_tracker.animate.set_value(2.0),  # Animate zoom to 2.0
-            run_time=3
-        )
-        self.remove_updater(lambda m, dt: self.set_camera_orientation(  # Added dt parameter
-            phi=30 * DEGREES,
-            theta=0 * DEGREES,
-            zoom=zoom_tracker.get_value()
-        ))
 
         ############################################################################
         # 2. SPACETIME EMERGES: MINKOWSKI WIREFRAME AND LIGHT CONE
         ############################################################################
-        # No dynamic camera animation needed here—just static set_camera_orientation
-        self.set_camera_orientation(phi=30 * DEGREES, theta=0 * DEGREES, zoom=1.8)  # Detailed view for spacetime
         axes = ThreeDAxes(
             x_range=[-4, 4], y_range=[-4, 4], z_range=[-4, 4],
             x_length=8, y_length=8, z_length=8,
@@ -111,7 +93,6 @@ class CosmicOrigins(ThreeDScene):
         # 3. ELECTROMAGNETIC BIRTH: E AND B WAVES
         ############################################################################
         self.stop_ambient_camera_rotation()
-        # No dynamic camera animation needed here—just static set_camera_orientation (already set above)
         self.play(
             axes.animate.scale(0.6).shift(DOWN * 1.5),
             spacetime_grid.animate.scale(0.6).shift(DOWN * 1.5),
@@ -163,8 +144,6 @@ class CosmicOrigins(ThreeDScene):
         ############################################################################
         # 4. QED REVELATION: LAGRANGIAN AND GAUGE SYMMETRY
         ############################################################################
-        # No dynamic camera animation needed here—just static set_camera_orientation
-        self.set_camera_orientation(phi=30 * DEGREES, theta=0 * DEGREES, zoom=2.0)  # Slight zoom out for clarity
         qed_lagrangian = MathTex(
             r"\mathcal{L}_{\text{QED}} = \bar{\psi} (i \gamma^\mu D_\mu - m) \psi - \frac{1}{4} F_{\mu \nu} F^{\mu \nu}",
             substrings_to_isolate=[r"\psi", r"D_\mu", r"\gamma^\mu", r"F_{\mu \nu}"],
@@ -187,8 +166,6 @@ class CosmicOrigins(ThreeDScene):
         ############################################################################
         # 5. FEYNMAN’S DANCE: INTERACTION VERTEX
         ############################################################################
-        # No dynamic camera animation needed here—just static set_camera_orientation
-        self.set_camera_orientation(phi=30 * DEGREES, theta=0 * DEGREES, zoom=1.8)  # Detailed view for Feynman
         self.play(
             FadeOut(e_wave), FadeOut(b_wave), FadeOut(label_E), FadeOut(label_B),
             FadeOut(propagation_arrow), FadeOut(prop_label),
@@ -219,8 +196,6 @@ class CosmicOrigins(ThreeDScene):
         ############################################################################
         # 6. RUNNING CONSTANT: COSMIC EVOLUTION
         ############################################################################
-        # No dynamic camera animation needed here—just static set_camera_orientation
-        self.set_camera_orientation(phi=30 * DEGREES, theta=0 * DEGREES, zoom=2.0)  # Slightly wider for graph
         alpha_plot = Axes(
             x_range=[0, 15], y_range=[0.005, 0.025], x_length=5, y_length=3,
             axis_config={"color": WHITE}
@@ -239,8 +214,6 @@ class CosmicOrigins(ThreeDScene):
         ############################################################################
         # 7. EPIC FINALE: UNITY OF CREATION
         ############################################################################
-        # No dynamic camera animation needed here—just static set_camera_orientation
-        self.set_camera_orientation(phi=30 * DEGREES, theta=0 * DEGREES, zoom=2.5)  # Wider view for finale
         self.play(
             axes.animate.scale(0.5).to_edge(LEFT, buff=0.5),
             spacetime_grid.animate.scale(0.5).to_edge(LEFT, buff=0.5),
