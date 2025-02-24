@@ -5,6 +5,44 @@ from typing import Callable
 # Configuration
 config.background_color = "#000000"
 
+# Utility functions
+def remap_interval(value, old_min, old_max, new_min, new_max):
+    """Remaps a value from one interval to another."""
+    old_range = old_max - old_min
+    new_range = new_max - new_min
+    return new_min + new_range * ((value - old_min) / old_range)
+
+def rgb_to_hex(rgb):
+    """Convert RGB values (0-1 scale) to hex color string."""
+    r, g, b = [int(255 * c) for c in rgb]
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+def rgb_to_color(rgb):
+    """Converts RGB values (0-1 scale) to a color."""
+    return rgb_to_hex(rgb)
+
+# Fix the Line3D class
+class Line3D(VMobject):
+    """A line in 3D space."""
+    def __init__(self, start=ORIGIN, end=RIGHT, **kwargs):
+        super().__init__(**kwargs)
+        self.set_points_as_corners([start, end])
+
+# Fix the Cone class
+class Cone(Surface):
+    """A cone in 3D space."""
+    def __init__(self, base_radius=1, height=2, **kwargs):
+        super().__init__(
+            lambda u, v: np.array([
+                v * base_radius * np.cos(u),
+                v * base_radius * np.sin(u),
+                height * (1 - v)
+            ]),
+            u_range=[0, TAU],
+            v_range=[0, 1],
+            **kwargs
+        )
+
 ##############################################################################
 #  Utility Classes
 ##############################################################################
@@ -44,12 +82,12 @@ class StarField(VGroup):
             for star in self.stars:
                 # Only animate some stars to twinkle
                 if np.random.random() < 0.3:  # 30% of stars twinkle
-                    original_opacity = star.get_opacity()
+                    original_opacity = star.get_fill_opacity()
                     target_opacity = np.random.uniform(0.1, original_opacity)
                     twinkle_time = np.random.uniform(0.5, 2.0)
                     
                     scene.play(
-                        star.animate.set_opacity(target_opacity),
+                        star.animate.set_fill_opacity(target_opacity),
                         rate_func=there_and_back,
                         run_time=twinkle_time,
                     )
@@ -272,18 +310,17 @@ class ElectromagneticWave(VGroup):
         self.e_field.set_points_smoothly(new_e_points)
         self.b_field.set_points_smoothly(new_b_points)
         
-        # Update vectors
+        # Update vectors - this approach might cause issues, let's fix it
+        new_e_vectors = VGroup()
+        new_b_vectors = VGroup()
+        
         for i, x in enumerate(np.arange(-5, 5, 0.5)):
             if i < len(self.e_vectors):
                 # Calculate field values at this point
                 e_val = self.amplitude * np.sin(self.k * x - phase)
                 b_val = self.amplitude * np.sin(self.k * x - phase)
                 
-                # Update vector positions
-                e_vector = self.e_vectors[i]
-                b_vector = self.b_vectors[i]
-                
-                # Replace the vectors with new ones
+                # Create new vectors
                 new_e_vector = Arrow3D(
                     start=self.axes.c2p(x, 0, 0),
                     end=self.axes.c2p(x, e_val, 0),
@@ -302,8 +339,14 @@ class ElectromagneticWave(VGroup):
                     tip_radius=0.05
                 )
                 
-                self.e_vectors.submobjects[i] = new_e_vector
-                self.b_vectors.submobjects[i] = new_b_vector
+                new_e_vectors.add(new_e_vector)
+                new_b_vectors.add(new_b_vector)
+        
+        # Remove old vectors and add new ones
+        self.remove(self.e_vectors, self.b_vectors)
+        self.e_vectors = new_e_vectors
+        self.b_vectors = new_b_vectors
+        self.add(self.e_vectors, self.b_vectors)
 
 class LightCone(Surface):
     """
@@ -317,7 +360,8 @@ class LightCone(Surface):
             resolution=resolution,
             **kwargs
         )
-        self.set_stroke(opacity=0.5)
+        self.set_stroke(width=1)
+        self.set_stroke_opacity(0.5)
         
     def func(self, u, v):
         # u: angle around cone
@@ -403,10 +447,10 @@ class QEDJourney(ThreeDScene):
         for _ in range(3):  # Twinkle a few times
             for star in star_field.stars:
                 if np.random.random() < 0.1:  # Only 10% of stars twinkle at once
-                    orig_opacity = star.get_opacity()
+                    orig_opacity = star.get_fill_opacity()
                     target_opacity = max(0.1, orig_opacity - np.random.uniform(0.1, 0.5))
                     self.play(
-                        star.animate.set_opacity(target_opacity),
+                        star.animate.set_fill_opacity(target_opacity),
                         rate_func=there_and_back,
                         run_time=np.random.uniform(0.3, 1.0),
                     )
@@ -857,7 +901,7 @@ class QEDJourney(ThreeDScene):
         
         # Transform to symbolic form with flash
         self.play(
-            coupling_numeric.animate.set_opacity(0.5),
+            coupling_numeric.animate.set_fill_opacity(0.5),
             TransformFromCopy(coupling_numeric, coupling_symbolic),
             Flash(coupling_symbolic, color=YELLOW, flash_radius=0.8),
             run_time=2
