@@ -79,17 +79,21 @@ class StarField(VGroup):
     
     def start_twinkling(self, scene):
         if self.twinkle:
-            for star in self.stars:
-                # Only animate some stars to twinkle
-                if np.random.random() < 0.3:  # 30% of stars twinkle
-                    original_opacity = star.get_fill_opacity()
-                    target_opacity = np.random.uniform(0.1, original_opacity)
-                    twinkle_time = np.random.uniform(0.5, 2.0)
-                    
+            for _ in range(3):  # Twinkle a few times
+                twinkle_anims = []
+                for star in self.stars:
+                    if np.random.random() < 0.1:  # Only 10% of stars twinkle
+                        orig_opacity = star.get_fill_opacity()
+                        target_opacity = max(0.1, orig_opacity - np.random.uniform(0.1, 0.5))
+                        twinkle_anims.append(
+                            star.animate.set_fill_opacity(target_opacity)
+                        )
+                
+                if twinkle_anims:
                     scene.play(
-                        star.animate.set_fill_opacity(target_opacity),
+                        *twinkle_anims,
                         rate_func=there_and_back,
-                        run_time=twinkle_time,
+                        run_time=1.0,
                     )
 
 class GlowingText(Text):
@@ -103,7 +107,7 @@ class GlowingText(Text):
         self.original = self.copy()
         for i in range(3):
             glow = self.copy()
-            glow.set_opacity(0.3 - 0.1*i)
+            glow.set_fill_opacity(0.3 - 0.1*i)
             glow.set_stroke(self.get_color(), width=5*(i+1)*self.glow_factor, opacity=0.3 - 0.1*i)
             self.add(glow)
         self.add(self.original)
@@ -120,7 +124,7 @@ class GlowingTex(Tex):
         self.original = self.copy()
         for i in range(3):
             glow = self.copy()
-            glow.set_opacity(0.3 - 0.1*i)
+            glow.set_fill_opacity(0.3 - 0.1*i)
             glow.set_stroke(self.glow_color, width=5*(i+1)*self.glow_factor, opacity=0.3 - 0.1*i)
             self.add(glow)
         self.add(self.original)
@@ -137,7 +141,7 @@ class GlowingMathTex(MathTex):
         self.original = self.copy()
         for i in range(3):
             glow = self.copy()
-            glow.set_opacity(0.3 - 0.1*i)
+            glow.set_fill_opacity(0.3 - 0.1*i)
             glow.set_stroke(self.glow_color, width=5*(i+1)*self.glow_factor, opacity=0.3 - 0.1*i)
             self.add(glow)
         self.add(self.original)
@@ -169,7 +173,12 @@ class Arrow3D(VGroup):
         # Calculate direction and length
         direction = end - start
         length = np.linalg.norm(direction)
-        unit_direction = direction / length
+        
+        # Prevent division by zero for zero-length vectors
+        if length < 1e-6:
+            unit_direction = np.array([0, 0, 1])  # Default direction if length is zero
+        else:
+            unit_direction = direction / length
         
         # Create the line
         line = Line3D(start=start, end=end - unit_direction * tip_length, **kwargs)
@@ -181,7 +190,8 @@ class Arrow3D(VGroup):
         # Rotate the tip to align with the direction
         axis = np.cross([0, 0, 1], unit_direction)
         angle = np.arccos(np.dot([0, 0, 1], unit_direction))
-        if np.linalg.norm(axis) > 0:
+        # Only rotate if we have a valid rotation axis and non-zero angle
+        if np.linalg.norm(axis) > 1e-6 and abs(angle) > 1e-6:
             tip.rotate(angle, axis=axis)
         
         self.add(line, tip)
@@ -226,10 +236,22 @@ class ElectromagneticWave(VGroup):
         self.e_field.set_color(e_color)
         self.e_field.set_stroke(width=4)
         
+        # Completely disable fill to avoid gradient issues
+        self.e_field.set_fill(color=e_color, opacity=0)
+        # Ensure no gradient is used
+        self.e_field.set_sheen_direction(None)
+        self.e_field.set_flat_stroke(True)
+        
         self.b_field = VMobject()
         self.b_field.set_points_smoothly(b_points)
         self.b_field.set_color(b_color)
         self.b_field.set_stroke(width=4)
+        
+        # Completely disable fill to avoid gradient issues
+        self.b_field.set_fill(color=b_color, opacity=0)
+        # Ensure no gradient is used
+        self.b_field.set_sheen_direction(None)
+        self.b_field.set_flat_stroke(True)
         
         # Add the curves to the group
         self.add(self.e_field, self.b_field)
@@ -443,17 +465,23 @@ class QEDJourney(ThreeDScene):
         self.play(FadeIn(star_field, run_time=3))
         self.wait(1)
         
-        # Add subtle twinkling to some stars
+        # Add subtle twinkling to some stars (more efficient approach)
         for _ in range(3):  # Twinkle a few times
+            twinkle_anims = []
             for star in star_field.stars:
-                if np.random.random() < 0.1:  # Only 10% of stars twinkle at once
+                if np.random.random() < 0.1:  # Only 10% of stars twinkle
                     orig_opacity = star.get_fill_opacity()
                     target_opacity = max(0.1, orig_opacity - np.random.uniform(0.1, 0.5))
-                    self.play(
-                        star.animate.set_fill_opacity(target_opacity),
-                        rate_func=there_and_back,
-                        run_time=np.random.uniform(0.3, 1.0),
+                    twinkle_anims.append(
+                        star.animate.set_fill_opacity(target_opacity)
                     )
+            
+            if twinkle_anims:
+                self.play(
+                    *twinkle_anims,
+                    rate_func=there_and_back,
+                    run_time=1.0,
+                )
         
         ############################################################################
         # 2. EPIC TITLE INTRODUCTION
@@ -488,10 +516,13 @@ class QEDJourney(ThreeDScene):
             run_time=3
         )
         
-        # Zoom and rotate to see the title better
-        self.move_camera(phi=65 * DEGREES, theta=-20 * DEGREES, added_anims=[
+        # First animate the title group
+        self.play(
             title_group.animate.move_to(ORIGIN),
-        ], run_time=3)
+            run_time=1.5
+        )
+        # Then move the camera
+        self.move_camera(phi=65 * DEGREES, theta=-20 * DEGREES, run_time=1.5)
         
         # Hold for appreciation
         self.wait(2)
@@ -596,9 +627,10 @@ class QEDJourney(ThreeDScene):
         ############################################################################
         # 4. ZOOM INTO ORIGIN FOR ELECTROMAGNETIC WAVE
         ############################################################################
-        # Move camera to focus on the coordinate origin
+        # First set the camera orientation
+        self.move_camera(phi=75 * DEGREES, theta=-45 * DEGREES, run_time=2)
+        # Then fade out the objects
         self.play(
-            self.camera.animate.set_phi(75 * DEGREES).set_theta(-45 * DEGREES),
             FadeOut(grid_lines),
             FadeOut(light_cone),
             FadeOut(past_light_cone),
@@ -640,12 +672,12 @@ class QEDJourney(ThreeDScene):
         
         # Display Maxwell's equations
         maxwell_classical = GlowingMathTex(
-            r"\begin{align}"
+            r"\begin{aligned}"
             r"\nabla \cdot \vec{E} &= \frac{\rho}{\epsilon_0} \\"
             r"\nabla \cdot \vec{B} &= 0 \\"
             r"\nabla \times \vec{E} &= -\frac{\partial\vec{B}}{\partial t} \\"
             r"\nabla \times \vec{B} &= \mu_0\vec{J} + \mu_0\epsilon_0\frac{\partial\vec{E}}{\partial t}"
-            r"\end{align}",
+            r"\end{aligned}",
             color=WHITE,
             glow_factor=0.5
         )
@@ -683,14 +715,20 @@ class QEDJourney(ThreeDScene):
         self.wait(2)
         
         # Clean up before next section
-        self.play(
-            FadeOut(em_wave),
-            FadeOut(prop_arrow),
-            FadeOut(prop_label),
-            FadeOut(maxwell_relativistic),
-            FadeOut(elegant_caption),
-            run_time=2
-        )
+        try:
+            self.play(
+                FadeOut(em_wave),
+                FadeOut(prop_arrow),
+                FadeOut(prop_label),
+                FadeOut(maxwell_relativistic),
+                FadeOut(elegant_caption),
+                run_time=2
+            )
+        except Exception as e:
+            # If we're starting from a later animation, some objects might not exist
+            # Just wait instead of trying to fade them out
+            print(f"Skipping cleanup animation due to: {e}")
+            self.wait(2)
         
         ############################################################################
         # 5. QED LAGRANGIAN
@@ -1025,28 +1063,92 @@ class QEDJourney(ThreeDScene):
             LightCone(height=1.5, resolution=(21, 21))
         ).scale(0.6).to_edge(LEFT, buff=1)
         
-        mini_wave = ElectromagneticWave(
-            axes=ThreeDAxes(),
-            x_range=[-2, 2, 0.1],
-            amplitude=0.8,
-            wavelength=1.5
-        ).scale(0.6).to_edge(RIGHT, buff=1)
+        # Create a simpler version of the wave to avoid gradient issues
+        mini_axes = ThreeDAxes(
+            x_range=[-2, 2],
+            y_range=[-2, 2],
+            z_range=[-2, 2],
+            x_length=4,
+            y_length=4,
+            z_length=4
+        )
         
-        mini_lagrangian = MathTex(
+        # Create simple sine curves instead of full ElectromagneticWave
+        e_curve = ParametricFunction(
+            lambda t: mini_axes.c2p(t, 0.8 * np.sin(2*PI*t/1.5), 0),
+            t_range=[-2, 2, 0.1],
+            color=RED_E,
+            stroke_width=2
+        )
+        
+        b_curve = ParametricFunction(
+            lambda t: mini_axes.c2p(t, 0, 0.8 * np.sin(2*PI*t/1.5)),
+            t_range=[-2, 2, 0.1],
+            color=BLUE_E,
+            stroke_width=2
+        )
+        
+        mini_wave = VGroup(mini_axes, e_curve, b_curve).scale(0.6).to_edge(RIGHT, buff=1)
+        
+        # Add elements one by one
+        self.play(
+            FadeIn(mini_spacetime),
+            FadeIn(mini_wave),
+            run_time=2
+        )
+        
+        # Create simpler 2D versions of the lagrangian and feynman diagram for the fixed frame
+        mini_lagrangian_2d = MathTex(
             r"\mathcal{L}_{\text{QED}} = \bar{\psi}(i\gamma^\mu D_\mu - m)\psi - \frac{1}{4}F_{\mu\nu}F^{\mu\nu}"
-        ).scale(0.5).to_edge(UP, buff=1)
+        ).scale(0.5)
         
-        mini_feynman = FeynmanDiagram(scale=0.8).to_edge(DOWN, buff=1)
+        mini_feynman_2d = VGroup(
+            Line(LEFT, ORIGIN, color=BLUE),
+            Line(ORIGIN, DOWN+LEFT, color=BLUE),
+            Line(RIGHT, ORIGIN, color=BLUE),
+            Line(ORIGIN, DOWN+RIGHT, color=BLUE),
+            Arc(start_angle=PI, angle=PI, radius=0.5, color=YELLOW)
+        ).scale(0.8)
         
-        # Create a unifying glow effect
+        # Create a frame to hold the 2D elements
+        frame_2d = Rectangle(width=12, height=3, fill_color=BLACK, fill_opacity=0.5, stroke_width=0)
+        frame_2d.to_edge(UP, buff=0.5)
+        
+        # Position the 2D elements
+        mini_lagrangian_2d.move_to(frame_2d.get_center() + UP * 0.5)
+        mini_feynman_2d.move_to(frame_2d.get_center() + DOWN * 0.5)
+        
+        # Group the 2D elements
+        collage_2d_group = VGroup(frame_2d, mini_lagrangian_2d, mini_feynman_2d)
+        
+        # Add as fixed in frame
+        self.add_fixed_in_frame_mobjects(collage_2d_group)
+        self.play(
+            FadeIn(collage_2d_group, run_time=2)
+        )
+        
+        # Add unifying glow
         unified_glow = Circle(
             radius=5,
-            stroke_width=0,
+            stroke_width=1,  # Add a slight stroke
+            stroke_color=BLUE_A,
             fill_color=BLUE,
             fill_opacity=0.1
         )
-        unified_glow.set_sheen_direction(UR)
-        unified_glow.set_sheen(0.5, BLUE)
+        unified_glow.move_to(ORIGIN)  # Ensure it's properly positioned
+        
+        # Add unifying glow animation - simplify to avoid rendering issues
+        self.play(
+            FadeIn(unified_glow),
+            run_time=2
+        )
+        
+        # Scale animation as a separate step
+        self.play(
+            unified_glow.animate.scale(1.2),
+            rate_func=there_and_back,
+            run_time=2
+        )
         
         # Final title
         final_title = GlowingText(
@@ -1067,55 +1169,36 @@ class QEDJourney(ThreeDScene):
         final_group.arrange(DOWN, buff=0.7)
         final_group.to_edge(DOWN, buff=1)
         
-        # Add elements one by one
-        self.play(
-            FadeIn(mini_spacetime),
-            FadeIn(mini_wave),
-            run_time=2
-        )
-        
-        self.add_fixed_in_frame_mobjects(mini_lagrangian, mini_feynman)
-        self.play(
-            FadeIn(mini_lagrangian),
-            FadeIn(mini_feynman),
-            run_time=2
-        )
-        
-        # Add unifying glow
-        self.play(
-            FadeIn(unified_glow, run_time=2),
-            unified_glow.animate.scale(1.2),
-            rate_func=there_and_back,
-            run_time=3
-        )
-        
         # Add final title and conclusion
         self.add_fixed_in_frame_mobjects(final_group)
         self.play(
             Write(final_title),
-            FadeIn(conclusion, run_time=2)
+            FadeIn(conclusion),
+            run_time=2
         )
         
-        # Final camera movement
-        self.begin_ambient_camera_rotation(rate=0.02)
+        # Final camera movement - simplified to avoid rendering issues
+        self.move_camera(phi=75 * DEGREES, theta=-20 * DEGREES, run_time=3)
         
-        # Gradually zoom out to cosmic scale again
+        # Wait to appreciate the final scene
+        self.wait(2)
+        
+        # Fade out elements in separate steps to avoid rendering issues
         self.play(
-            self.camera.animate.set_phi(75 * DEGREES).set_theta(-20 * DEGREES),
-            run_time=5
-        )
-        
-        # Fade out all elements except stars
-        all_elements = VGroup(
-            mini_spacetime, mini_wave, unified_glow
+            FadeOut(mini_spacetime),
+            FadeOut(mini_wave),
+            run_time=1.5
         )
         
         self.play(
-            FadeOut(all_elements),
-            FadeOut(mini_lagrangian),
-            FadeOut(mini_feynman),
+            FadeOut(unified_glow),
+            FadeOut(collage_2d_group),
+            run_time=1.5
+        )
+        
+        self.play(
             FadeOut(final_group),
-            run_time=3
+            run_time=1.5
         )
         
         # Add "Finis" at the end
@@ -1128,9 +1211,6 @@ class QEDJourney(ThreeDScene):
         
         self.add_fixed_in_frame_mobjects(finis)
         self.play(FadeIn(finis, run_time=2))
-        
-        # Final pause
-        self.wait(3)
 
 
 # Define additional scenes if needed for complex sequences
@@ -1189,5 +1269,3 @@ class QEDEquationTransformations(Scene):
             Create(elegant_box),
             Write(elegant_text)
         )
-        
-        self.wait(2)
