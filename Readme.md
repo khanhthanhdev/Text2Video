@@ -1,4 +1,5 @@
-# IMPORTANT Note
+# IMPORTANT NOTE
+
 
 This repository contains the **output files** of a mathematical animation generation process, not the complete pipeline. Users can run these files to render the animations on their machines, but the model and methodology used to generate these animation scripts are not included. 
 
