@@ -1,3 +1,11 @@
+# IMPORTANT DISCLOSURE
+
+This repository contains the **output files** of a mathematical animation generation process, not the complete pipeline. Users can run these files to render the animations on their machines, but the model and methodology used to generate these animation scripts are not included. 
+
+In other words, this repo provides the Manim code that produces the visualizations, but not the AI system that creates this code from mathematical concepts. The complete pipeline from mathematical concept to animation code remains proprietary.
+
+---
+
 # Math-To-Manim 
 
 [![Star History Chart](https://api.star-history.com/svg?repos=HarleyCoops/Math-To-Manim&type=Date)](https://star-history.com/#HarleyCoops/Math-To-Manim&Date)
@@ -122,16 +130,65 @@ An interesting new thing to ask for is the capacity to generate simultaneous "st
 ### 4. Gale-Shapley Algorithm
 - **Source**: `gale-shaply.py`
 - **Documentation**: See `/docs` for detailed formula explanations
+- **Description**: Visualizes the Gale-Shapley algorithm for stable matching, showing bipartite graphs, preference orderings, and stability conditions.
 - **Render Command**:
   ```bash
   python -m manim -qh gale-shaply.py GaleShapleyVisualization
   ```
 
-**Note**: The current implementation focuses on mathematical formulas and bipartite matching visualization. Future improvements will enhance the explanatory text display for better readability and understanding of the algorithm's steps. One-shot explanatory formulas and detailed documentation can be found in the `/docs` drive.
+### 5. Information Geometry
+- **Source**: `information_geometry.py`
+- **Description**: Explores the landscape of probability through information geometry, visualizing concepts like probability manifolds, KL divergence, and Fisher information.
+- **Render Command**:
+  ```bash
+  python -m manim -qh information_geometry.py InformationGeometryScene
+  ```
+
+### 6. Probabilistic Contrastive Loss (ProLIP)
+- **Source**: `prolip.py`
+- **Description**: Visualizes the ProLIP framework for multimodal learning, showing visual and textual encoders, contrastive loss, and inclusion loss.
+- **Render Command**:
+  ```bash
+  python -m manim -qh prolip.py ProLIPScene
+  ```
+
+### 7. Diffusion Models and Optimal Transport
+- **Source**: `diffusion_optimal_transport.py`
+- **Description**: Illustrates the connection between diffusion models and optimal transport, visualizing the Benamou-Brenier Theorem and Wasserstein Distance.
+- **Render Command**:
+  ```bash
+  python -m manim -qh diffusion_optimal_transport.py DiffusionAndOptimalTransport
+  ```
+
+### 8. Radium Atom Structure
+- **Source**: `radium_atom.py`
+- **Description**: Visualizes the Bohr-Sommerfeld model of the radium atom, showing orbital structures, quantization rules, and energy levels.
+- **Render Command**:
+  ```bash
+  python -m manim -qh radium_atom.py RadiumAtomStructure
+  ```
+
+### 9. Quantum Field Theory Journey
+- **Source**: `grok_quantum2.py`
+- **Description**: Takes viewers on a journey through Quantum Electrodynamics (QED), visualizing concepts like spacetime, light cones, electromagnetic waves, and Feynman diagrams.
+- **Render Command**:
+  ```bash
+  python -m manim -qh grok_quantum2.py QEDJourney
+  ```
+
+### 10. Nested Geometric Shapes
+- **Source**: `stickman.py`
+- **Description**: Creates a 3D animation showing nested geometric shapes (human inside house inside sphere inside cube inside cylinder inside pyramid).
+- **Render Command**:
+  ```bash
+  python -m manim -qh stickman.py InscribedShapes
+  ```
+
+**Note**: The current implementation focuses on mathematical formulas and visualizations. Future improvements will enhance the explanatory text display for better readability and understanding of the concepts. One-shot explanatory formulas and detailed documentation can be found in the `/docs` directory.
 
 **New Feature**: Try `--format webm` for modern video compression
 
-### 6. Rhombicosidodecahedron Animations
+### 11. Rhombicosidodecahedron Animations
 - **Source**: Located in `Rhombicosidodecahedron/` directory
 - **Animations**:
   1. `bouncing.py` - Complex 3D bouncing transformations
@@ -687,12 +744,3 @@ This repository uses Git Large File Storage (Git LFS) to handle large media file
 - Check tracked files: `git lfs ls-files`
 - Verify status: `git status`
 - Check file tracking patterns: `git lfs track`
-
-
-
-
-
-
-
-
-
