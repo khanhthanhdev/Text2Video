@@ -5,6 +5,30 @@ This repository contains the **output files** of a mathematical animation genera
 
 In other words, this repo provides the Manim code that produces the visualizations, but not the AI system that creates this code from mathematical concepts. The complete pipeline from mathematical concept to animation code remains proprietary.
 
+Your prompts need extreme detail in order for this to work. For example, this below is a BASIC prompt. You MUST have this level of detail. Most people cant write half of this so the project uses training to try and improve what someone might write as a basic prompt into a what the LLMs are actually looking for. Anyone can do this on your own, I promise this is all prompting but the secret NOT prompting in english - you have to prompt in Latex. Happy hunting!
+
+"Begin by slowly fading in a panoramic star field backdrop to set a cosmic stage. As the camera orients itself to reveal a three-dimensional axis frame, introduce a large title reading 'Quantum Field Theory: 
+A Journey into the Electromagnetic Interaction,' written in bold, glowing text at the center of the screen. The title shrinks and moves into the upper-left corner, making room for a rotating wireframe representation of 4D Minkowski spacetime—though rendered in 3D for clarity—complete with a light cone that stretches outward. While this wireframe slowly rotates, bring in color-coded equations of the relativistic metric, such as 
+ds2=−c2dt2+dx2+dy2+dz2ds^2 = -c^2 dt^2 + dx^2 + dy^2 + dz^2, with each component highlighted in a different hue to emphasize the negative time component and positive spatial components.
+
+Next, zoom the camera into the wireframe's origin to introduce the basic concept of a quantum field. Show a ghostly overlay of undulating plane waves in red and blue, symbolizing an electric field and a magnetic field respectively, oscillating perpendicularly in sync. Label these fields as E⃗\vec{E} and B⃗\vec{B}, placing them on perpendicular axes with small rotating arrows that illustrate their directions over time. Simultaneously, use a dynamic 3D arrow to demonstrate that the wave propagates along the z-axis. 
+
+As the wave advances, display a short excerpt of Maxwell's equations, morphing from their classical form in vector calculus notation to their elegant, relativistic compact form: ∂μFμν=μ0Jν\partial_\mu F^{\mu \nu} = \mu_0 J^\nu. Animate each transformation by dissolving and reassembling the symbols, underscoring the transition from standard form to four-vector notation.
+
+Then, shift the focus to the Lagrangian density for quantum electrodynamics (QED):
+LQED=ψˉ(iγμDμ−m)ψ−14FμνFμν.\mathcal{L}_{\text{QED}} = \bar{\psi}(i \gamma^\mu D_\mu - m)\psi - \tfrac{1}{4}F_{\mu\nu}F^{\mu\nu}.
+
+Project this equation onto a semi-transparent plane hovering in front of the wireframe spacetime, with each symbol color-coded: the Dirac spinor ψ\psi in orange, the covariant derivative DμD_\mu in green, the gamma matrices γμ\gamma^\mu in bright teal, and the field strength tensor FμνF_{\mu\nu} in gold. Let these terms gently pulse to indicate they are dynamic fields in spacetime, not just static quantities. 
+
+While the Lagrangian is on screen, illustrate the gauge invariance by showing a quick animation where ψ\psi acquires a phase factor eiα(x)e^{i \alpha(x)}, while the gauge field transforms accordingly. Arrows and short textual callouts appear around the equation to explain how gauge invariance enforces charge conservation.
+Next, pan the camera over to a large black background to present a simplified Feynman diagram. Show two electron lines approaching from the left and right, exchanging a wavy photon line in the center. 
+
+The electron lines are labeled e−e^- in bright blue, and the photon line is labeled γ\gamma in yellow. Subtitles and small pop-up text boxes narrate how this basic vertex encapsulates the electromagnetic interaction between charged fermions, highlighting that the photon is the force carrier. Then, animate the coupling constant α≈1137\alpha \approx \frac{1}{137} flashing above the diagram, gradually evolving from a numeric approximation to the symbolic form α=e24πϵ0ℏc\alpha = \frac{e^2}{4 \pi \epsilon_0 \hbar c}.
+
+Afterward, transition to a 2D graph that plots the running of the coupling constant α\alpha with respect to energy scale, using the renormalization group flow. As the graph materializes, a vertical axis labeled 'Coupling Strength' and a horizontal axis labeled 'Energy Scale' come into view, each sporting major tick marks and numerical values. The curve gently slopes upward, illustrating how α\alpha grows at higher energies, with dynamic markers along the curve to indicate different experimental data points. Meanwhile, short textual captions in the corners clarify that this phenomenon arises from virtual particle-antiparticle pairs contributing to vacuum polarization.
+
+In the final sequence, zoom back out to reveal a cohesive collage of all elements: the rotating spacetime grid, the undulating electromagnetic fields, the QED Lagrangian, and the Feynman diagram floating in the foreground. Fade in an overarching summary text reading 'QED: Unifying Light and Matter Through Gauge Theory,' emphasized by a halo effect. The camera then slowly pulls away, letting the cosmic background re-emerge until each component gracefully dissolves, ending on a single star field reminiscent of the opening shot. A concluding subtitle, 'Finis,' appears, marking the animation's closure and prompting reflection on how fundamental quantum field theory is in describing our universe."
+
 ---
 
 # Math-To-Manim 
@@ -35,6 +59,36 @@ This project uses DeepSeek AI (and some Google Gemini (and now #Grok3) to genera
 The model is *not yet* a fully fine-tuned version of [DeepSeek's R1 Zero](https://huggingface.co/deepseek-ai/DeepSeek-R1-Zero), but I am working on that (Still working on this, better prompting still works best). Most errors you will encounter when attempting animations on your own in one shot will be related to how LaTeX is being interpreted as a formula to be rendered on the screen or as part of the code itself. 
 
 An interesting new thing to ask for is the capacity to generate simultaneous "study notes" that accompany each animation with a complete explanation of the math and context of the animation. The Benamou animation and notes were the first attempt at this. This also just works straight from the prompt if you pass the scene code directly back to the model.
+
+**New Feature**: Try `--format webm` for modern video compression
+
+---
+
+## Prompt Detail Requirements
+
+Your prompts need extreme detail in order for this to work. For example, this is a BASIC prompt. You MUST have this level of detail. 
+
+"Begin by slowly fading in a panoramic star field backdrop to set a cosmic stage. As the camera orients itself to reveal a three-dimensional axis frame, introduce a large title reading 'Quantum Field Theory: 
+A Journey into the Electromagnetic Interaction,' written in bold, glowing text at the center of the screen. The title shrinks and moves into the upper-left corner, making room for a rotating wireframe representation of 4D Minkowski spacetime—though rendered in 3D for clarity—complete with a light cone that stretches outward. While this wireframe slowly rotates, bring in color-coded equations of the relativistic metric, such as 
+ds2=−c2dt2+dx2+dy2+dz2ds^2 = -c^2 dt^2 + dx^2 + dy^2 + dz^2, with each component highlighted in a different hue to emphasize the negative time component and positive spatial components.
+
+Next, zoom the camera into the wireframe's origin to introduce the basic concept of a quantum field. Show a ghostly overlay of undulating plane waves in red and blue, symbolizing an electric field and a magnetic field respectively, oscillating perpendicularly in sync. Label these fields as E⃗\vec{E} and B⃗\vec{B}, placing them on perpendicular axes with small rotating arrows that illustrate their directions over time. Simultaneously, use a dynamic 3D arrow to demonstrate that the wave propagates along the z-axis. 
+
+As the wave advances, display a short excerpt of Maxwell's equations, morphing from their classical form in vector calculus notation to their elegant, relativistic compact form: ∂μFμν=μ0Jν\partial_\mu F^{\mu \nu} = \mu_0 J^\nu. Animate each transformation by dissolving and reassembling the symbols, underscoring the transition from standard form to four-vector notation.
+
+Then, shift the focus to the Lagrangian density for quantum electrodynamics (QED):
+LQED=ψˉ(iγμDμ−m)ψ−14FμνFμν.\mathcal{L}_{\text{QED}} = \bar{\psi}(i \gamma^\mu D_\mu - m)\psi - \tfrac{1}{4}F_{\mu\nu}F^{\mu\nu}.
+
+Project this equation onto a semi-transparent plane hovering in front of the wireframe spacetime, with each symbol color-coded: the Dirac spinor ψ\psi in orange, the covariant derivative DμD_\mu in green, the gamma matrices γμ\gamma^\mu in bright teal, and the field strength tensor FμνF_{\mu\nu} in gold. Let these terms gently pulse to indicate they are dynamic fields in spacetime, not just static quantities. 
+
+While the Lagrangian is on screen, illustrate the gauge invariance by showing a quick animation where ψ\psi acquires a phase factor eiα(x)e^{i \alpha(x)}, while the gauge field transforms accordingly. Arrows and short textual callouts appear around the equation to explain how gauge invariance enforces charge conservation.
+Next, pan the camera over to a large black background to present a simplified Feynman diagram. Show two electron lines approaching from the left and right, exchanging a wavy photon line in the center. 
+
+The electron lines are labeled e−e^- in bright blue, and the photon line is labeled γ\gamma in yellow. Subtitles and small pop-up text boxes narrate how this basic vertex encapsulates the electromagnetic interaction between charged fermions, highlighting that the photon is the force carrier. Then, animate the coupling constant α≈1137\alpha \approx \frac{1}{137} flashing above the diagram, gradually evolving from a numeric approximation to the symbolic form α=e24πϵ0ℏc\alpha = \frac{e^2}{4 \pi \epsilon_0 \hbar c}.
+
+Afterward, transition to a 2D graph that plots the running of the coupling constant α\alpha with respect to energy scale, using the renormalization group flow. As the graph materializes, a vertical axis labeled 'Coupling Strength' and a horizontal axis labeled 'Energy Scale' come into view, each sporting major tick marks and numerical values. The curve gently slopes upward, illustrating how α\alpha grows at higher energies, with dynamic markers along the curve to indicate different experimental data points. Meanwhile, short textual captions in the corners clarify that this phenomenon arises from virtual particle-antiparticle pairs contributing to vacuum polarization.
+
+In the final sequence, zoom back out to reveal a cohesive collage of all elements: the rotating spacetime grid, the undulating electromagnetic fields, the QED Lagrangian, and the Feynman diagram floating in the foreground. Fade in an overarching summary text reading 'QED: Unifying Light and Matter Through Gauge Theory,' emphasized by a halo effect. The camera then slowly pulls away, letting the cosmic background re-emerge until each component gracefully dissolves, ending on a single star field reminiscent of the opening shot. A concluding subtitle, 'Finis,' appears, marking the animation's closure and prompting reflection on how fundamental quantum field theory is in describing our universe."
 
 ---
 
@@ -187,8 +241,6 @@ An interesting new thing to ask for is the capacity to generate simultaneous "st
 
 **Note**: The current implementation focuses on mathematical formulas and visualizations. Future improvements will enhance the explanatory text display for better readability and understanding of the concepts. One-shot explanatory formulas and detailed documentation can be found in the `/docs` directory.
 
-**New Feature**: Try `--format webm` for modern video compression
-
 ### 11. Rhombicosidodecahedron Animations
 - **Source**: Located in `Rhombicosidodecahedron/` directory
 - **Animations**:
@@ -203,8 +255,6 @@ An interesting new thing to ask for is the capacity to generate simultaneous "st
   python -m manim -qh Rhombicosidodecahedron/flythroughbouncing.py FlythroughScene
   ```
 - **Note**: These are not one-shot files but rather complex renderings in R1 inspired by [this tweet](https://x.com/_akhaliq/status/1882985442691437006), showcasing sophisticated 3D geometric visualizations
-
-**New Feature**: Try `--format webm` for modern video compression
 
 ---
 
@@ -609,139 +659,3 @@ model_4bit = AutoModelForSeq2SeqLM.from_pretrained(
     load_in_4bit=True
 )
 ```
-
----
-
-## **6. Implementation Details**
-
-### **6.1 Memory Management**
-
-- **Sharded Checkpoints**: The model is split into multiple shards; each shard is verified upon download. Large shards can be memory-mapped, so your system requirements also include disk I/O overhead.  
-- **Accelerate Integration**: By leveraging [Accelerate](https://github.com/huggingface/accelerate), you can distribute model shards across multiple GPUs or perform CPU offloading if GPU memory is insufficient.
-
-### **6.2 Extended Context Mechanism**
-
-- **Rotary & Segment Encodings**: At large sequence lengths, standard absolute positions can degrade performance. R1-Zero's hybrid approach (inspired by [T5], [LongT5], and [RoFormer]) helps maintain stable gradients even at 8k tokens.  
-- **Parallel Cross-Attention**: The decoder employs a specialized parallel cross-attention mechanism in certain layers, which can reduce overhead in multi-GPU setups.
-
----
-
-## **7. Performance Benchmarks**
-
-**DeepSeek R1-Zero** typically competes near GPT-3.5 performance in standard generative benchmarks:
-
-- **Inference Latency**  
-  - 4-bit: ~100–200ms per token (varies by GPU)  
-  - FP16: ~200–400ms per token  
-  - FP32: ~400–800ms per token
-
-- **Quality Metrics**  
-  - **BLEU & ROUGE**: On summarization tasks (CNN/DailyMail), R1-Zero hovers at ~1–2 points below GPT-3.5.  
-  - **Open Domain QA**: On NaturalQuestions, R1-Zero closely matches strong baselines (e.g., T5-XXL) when properly instructed.
-
-Keep in mind that your hardware setup and parallelism strategies can influence these benchmarks significantly.
-
----
-
-## **8. Potential Limitations & Future Work**
-
-Despite R1-Zero's strengths, several **limitations** persist:
-
-1. **Token Context Limit**: 8,192 tokens is high, but certain extreme use cases (e.g., full-text searching in large documents) may require bridging or chunking.  
-2. **Training Biases**: While instruction-tuning reduces hallucinations, domain gaps remain. For heavily specialized or newly emerging knowledge, the model may produce uncertain or dated information.  
-3. **Interpretability**: Like all Transformer-based LLMs, R1-Zero functions as a "black box." Advanced interpretability tools are still an active research area.
-
-**Future Directions**:  
-- Integrating advanced memory systems to handle prompts beyond 8k tokens.  
-- Incorporating **flash attention** for further speed-ups.  
-- Investigating retrieval-augmented generation modules to reduce outdated knowledge reliance.
-
----
-
-## **9. Usage Examples**
-
-Below are a few quick examples to illustrate R1-Zero's capabilities:
-
-### **9.1 Short Story Generation**
-
-```python
-prompt = "Write a short sci-fi story about artificial intelligence."
-inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-output_ids = model.generate(inputs["input_ids"], max_length=150)
-print(tokenizer.decode(output_ids[0], skip_special_tokens=True))
-```
-
-### **9.2 Technical Explanation**
-
-```python
-prompt = "Explain the concept of gradient descent as if speaking to a first-year PhD student."
-inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-output_ids = model.generate(inputs["input_ids"], max_length=200)
-print(tokenizer.decode(output_ids[0], skip_special_tokens=True))
-```
-
-Feel free to refine these prompts and tune generation parameters (`num_beams`, `temperature`, `top_k`, etc.) to shape the style.
-
----
-
-## **10. Citation**
-
-If you use this project in your research or work, please cite it as:
-
-```bibtex
-@misc{cooper2025deepseekmanim,
-    title={DeepSeek-Manim Animation Generator: Automated Mathematical Animations using DeepSeek API},
-    author={Cooper, Christian H.},
-    year={2025},
-    howpublished={\url{https://github.com/HarleyCoops/Deepseek-R1-Zero}},
-    note={A tool for generating Manim animations using DeepSeek's API}
-}
-```
-
----
-
-## Handling Large Media Files
-
-This repository uses Git Large File Storage (Git LFS) to handle large media files like GIFs. Here's how to work with large media files:
-
-### Setup Git LFS
-
-1. Install Git LFS:
-   ```bash
-   git lfs install
-   ```
-
-2. Track GIF files:
-   ```bash
-   git lfs track "*.gif"
-   ```
-
-3. Add and commit the `.gitattributes` file:
-   ```bash
-   git add .gitattributes
-   git commit -m "chore: Add Git LFS tracking for GIF files"
-   ```
-
-### Adding New Media Files
-
-1. Place GIF files in their designated directory (e.g., `SpatialReasoningTest/`)
-
-2. Update `.gitignore` to allow GIFs in specific directories:
-   ```
-   # Ignore GIFs except in specific directories
-   *.gif
-   !SpatialReasoningTest/*.gif
-   ```
-
-3. Add and commit the files:
-   ```bash
-   git add your-directory/*.gif
-   git commit -m "feat: Add new animation GIFs"
-   git push
-   ```
-
-### Verification
-
-- Check tracked files: `git lfs ls-files`
-- Verify status: `git status`
-- Check file tracking patterns: `git lfs track`
