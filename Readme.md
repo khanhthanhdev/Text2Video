@@ -35,6 +35,8 @@ In the final sequence, zoom back out to reveal a cohesive collage of all element
 
 # Math-To-Manim 
 
+## Star History
+
 [![Star History Chart](https://api.star-history.com/svg?repos=HarleyCoops/Math-To-Manim&type=Date)](https://star-history.com/#HarleyCoops/Math-To-Manim&Date)
 
 ## Project Overview 
