@@ -35,46 +35,25 @@ def generate_manim_code(prompt, model_name, temperature=0.7, max_tokens=8192):
         You are an expert in creating mathematical and physics visualizations using Manim (Mathematical Animation Engine).
         Your task is to convert a text prompt into valid, executable Manim Python code.
         
-        Rules:
-        1. Only return valid Python code that will work with the latest version of Manim
-        2. Do not include any explanations outside of code comments
-        3. Use the Scene class
-        4. Include any necessary imports
-        5. Use clear, self-explanatory variable names
-        6. Include helpful comments that explain the visualization steps
-        7. Make the visualization educational, clear, and visually appealing
-        8. The code must be complete and directly executable
-        9. Always inherit from Scene and implement the construct method
-        10. The class name must be "Screen"
+        IMPORTANT RULES FOR COMPILATION SUCCESS:
+        1. Only return valid Python code that works with the latest version of Manim Community edition
+        2. Do NOT include any explanations outside of code comments
+        3. Use ONLY the Scene class as the base class
+        4. Include ALL necessary imports at the top (from manim import *)
+        5. Use descriptive variable names that follow Python conventions
+        6. Include helpful comments for complex parts of the visualization
+        7. The class name MUST be "Screen" - always use this exact name
+        8. Always implement the construct method correctly
+        9. Ensure all objects are properly added to the scene with self.play() or self.add()
+        10. Do not create custom classes other than the main Scene class
+        11. Include proper self.wait() calls after animations for better viewing
+        12. Check all mathematical expressions are valid LaTeX syntax
+        13. Avoid advanced or experimental Manim features that might not be widely available
+        14. Keep animations under 20 seconds total for better performance
+        15. Ensure all coordinates and dimensions are appropriate for the default canvas size
+        16. DO NOT include any backticks (```) or markdown formatting in your response
         
-        Example of expected code format:
-        
-        ```python
-        from manim import *
-        
-        class Screen(Scene):
-            def construct(self):
-                # Create a right triangle
-                triangle = Polygon(
-                    ORIGIN,
-                    RIGHT * 3,
-                    UP * 4,
-                    color=WHITE
-                )
-                
-                # Add labels
-                a = Text("a", font_size=30).next_to(triangle, DOWN)
-                b = Text("b", font_size=30).next_to(triangle, RIGHT)
-                c = Text("c", font_size=30).next_to(
-                    triangle.get_center(),
-                    UP + LEFT
-                )
-                
-                # Create the visualization...
-                # [Rest of the code...]
-        ```
-        
-        Respond only with the executable Python code, nothing else.
+        RESPOND WITH ONLY THE EXECUTABLE PYTHON CODE, NO INTRODUCTION OR EXPLANATION, NO MARKDOWN FORMATTING.
         """
         
         final_prompt = f"Create a Manim visualization that explains: {prompt}"
@@ -93,6 +72,7 @@ def generate_manim_code(prompt, model_name, temperature=0.7, max_tokens=8192):
         
         generated_code = response.choices[0].message.content
         
+        # Strip markdown formatting if it appears in the response
         if "```python" in generated_code:
             generated_code = generated_code.split("```python")[1]
             if "```" in generated_code:
@@ -101,7 +81,14 @@ def generate_manim_code(prompt, model_name, temperature=0.7, max_tokens=8192):
             generated_code = generated_code.split("```")[1]
             if "```" in generated_code:
                 generated_code = generated_code.split("```")[0]
-                
+        
+        # Remove any additional backticks that might cause syntax errors
+        generated_code = generated_code.replace('```', '')
+        
+        # Ensure code starts with proper import
+        if not generated_code.strip().startswith('from manim import'):
+            generated_code = 'from manim import *\n\n' + generated_code
+            
         return generated_code.strip()
         
     except Exception as e:
