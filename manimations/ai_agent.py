@@ -107,23 +107,151 @@ def extract_scenario(ctx: RunContext[AnimationPrompt]) -> AnimationScenario:
     response = client.chat.completions.create(
         model=llm,
         messages=[
-            {"role": "system", "content": "Extract structured information for a mathematical animation."},
-            {"role": "user", "content": f"From this description: '{prompt.description}', extract the title, "
-                                        f"mathematical objects, transformations, and equations. "
-                                        f"Consider complexity level: {prompt.complexity}."}
+            {"role": "system", "content": """
+Create a storyboard for a math/physics educational animation. Focus on making concepts clear for beginners.
+
+Respond with a JSON object containing:
+- title: A clear, engaging title
+- objects: Mathematical objects to include (e.g., "coordinate_plane", "function_graph")
+- transformations: Animation types to use (e.g., "fade_in", "transform")
+- equations: Mathematical equations to feature (can be null)
+- storyboard: 5-7 sections, each with:
+  * section_name: Section name (e.g., "Introduction")
+  * time_range: Timestamp range (e.g., "0:00-2:00")
+  * narration: What the narrator says
+  * visuals: What appears on screen
+  * animations: Specific animations
+  * key_points: 1-2 main takeaways
+
+Include: introduction, simple explanation, detailed walkthrough, examples, and conclusion.
+
+Use everyday analogies, define technical terms, and focus on visualization.
+
+Only respond with the JSON object, nothing else.
+"""},
+            {"role": "user", "content": f"Create an animation storyboard for: '{prompt.description}'. "
+                                        f"Complexity level: {prompt.complexity}. Make it beginner-friendly "
+                                        f"with clear explanations and visual examples."}
         ]
     )
     content = response.choices[0].message.content
     
-    # Parse the response into structured data
-    # This is simplified; in reality, you would need more robust parsing
-    scenario_dict = {
-        "title": "Generated Animation",
-        "objects": ["circle", "line"],
-        "transformations": ["rotation"],
-        "equations": None
-    }
-    return AnimationScenario(**scenario_dict)
+    try:
+        # Extract JSON from response
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            scenario_dict = json.loads(json_str)
+            
+            # Get basic scenario info
+            title = scenario_dict.get('title', f"{prompt.description.capitalize()} Visualization")
+            objects = scenario_dict.get('objects', [])
+            transformations = scenario_dict.get('transformations', [])
+            equations = scenario_dict.get('equations', None)
+            
+            # Store the storyboard in logger
+            if 'storyboard' in scenario_dict:
+                logger.info(f"Generated storyboard: {json.dumps(scenario_dict['storyboard'], indent=2)}")
+            
+            return AnimationScenario(
+                title=title,
+                objects=objects,
+                transformations=transformations,
+                equations=equations
+            )
+    except Exception as e:
+        logger.error(f"Error parsing scenario JSON: {e}")
+    
+    # Fallback with default values
+    return AnimationScenario(
+        title=f"{prompt.description.capitalize()} Visualization",
+        objects=["circle", "text", "coordinate_system"],
+        transformations=["creation", "transformation", "highlight"],
+        equations=None
+    )
+
+# Also simplify extract_scenario_direct with the same approach
+def extract_scenario_direct(prompt: str, complexity: str = "medium") -> AnimationScenario:
+    """Direct implementation of scenario extraction without using RunContext."""
+    # Use Together API with OpenAI client
+    response = client.chat.completions.create(
+        model=llm,
+        messages=[
+            {"role": "system", "content": """
+Create a storyboard for a math/physics educational animation. Focus on making concepts clear for beginners.
+
+Respond with a JSON object containing:
+- title: A clear, engaging title
+- objects: Mathematical objects to include (e.g., "coordinate_plane", "function_graph")
+- transformations: Animation types to use (e.g., "fade_in", "transform")
+- equations: Mathematical equations to feature (can be null)
+- storyboard: 5-7 sections, each with:
+  * section_name: Section name (e.g., "Introduction")
+  * time_range: Timestamp range (e.g., "0:00-2:00")
+  * narration: What the narrator says
+  * visuals: What appears on screen
+  * animations: Specific animations
+  * key_points: 1-2 main takeaways
+
+Include: introduction, simple explanation, detailed walkthrough, examples, and conclusion.
+
+Use everyday analogies, define technical terms, and focus on visualization.
+
+Only respond with the JSON object, nothing else.
+"""},
+            {"role": "user", "content": f"Create an animation storyboard for: '{prompt}'. "
+                                        f"Complexity level: {complexity}. Make it beginner-friendly "
+                                        f"with clear explanations and visual examples."}
+        ]
+    )
+    content = response.choices[0].message.content
+    
+    try:
+        # Extract JSON from response
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            scenario_dict = json.loads(json_str)
+            
+            # Get basic scenario info
+            title = scenario_dict.get('title', f"{prompt.capitalize()} Visualization")
+            objects = scenario_dict.get('objects', [])
+            transformations = scenario_dict.get('transformations', [])
+            equations = scenario_dict.get('equations', None)
+            
+            # Store the storyboard in logger
+            if 'storyboard' in scenario_dict:
+                logger.info(f"Generated storyboard: {json.dumps(scenario_dict['storyboard'], indent=2)}")
+            
+            return AnimationScenario(
+                title=title,
+                objects=objects,
+                transformations=transformations,
+                equations=equations
+            )
+    except Exception as e:
+        logger.error(f"Error parsing scenario JSON: {e}")
+    
+    # Fallback based on keywords in prompt
+    objects = ["circle", "text", "coordinate_system"]
+    transformations = ["creation", "transformation", "highlight"]
+    equations = None
+    
+    if any(kw in prompt.lower() for kw in ["triangle", "pythagorean"]):
+        objects = ["triangle", "square", "text"]
+        transformations = ["creation", "area_calculation"]
+        equations = ["a^2 + b^2 = c^2"]
+    elif any(kw in prompt.lower() for kw in ["calculus", "derivative", "integral"]):
+        objects = ["function_graph", "tangent_line", "area"]
+        transformations = ["drawing", "zoom", "fill"]
+        equations = ["f'(x) = \\lim_{h \\to 0}\\frac{f(x+h) - f(x)}{h}"]
+    
+    return AnimationScenario(
+        title=f"{prompt.capitalize()} Visualization",
+        objects=objects,
+        transformations=transformations,
+        equations=equations
+    )
 
 @manim_agent.tool
 def generate_code(ctx: RunContext[AnimationPrompt], scenario: AnimationScenario) -> str:
@@ -134,7 +262,6 @@ def generate_code(ctx: RunContext[AnimationPrompt], scenario: AnimationScenario)
     equations_str = ", ".join(scenario.equations) if scenario.equations else "No equations"
     
     prompt_description = ctx.deps.description  # Access the original prompt
-    
     response = client.chat.completions.create(
         model=llm,
         messages=[
@@ -164,7 +291,7 @@ def render_manim_video(code, quality="medium_quality"):
             if line.startswith("class ") and "Scene" in line:
                 class_name = line.split("class ")[1].split("(")[0].strip()
                 break
-        
+            
         if not class_name:
             return "Error: Could not identify the Scene class in the generated code."
         
@@ -223,18 +350,64 @@ def render_manim_video(code, quality="medium_quality"):
         
     except Exception as e:
         logger.error(f"Error rendering video: {e}")
-        return f"Error rendering video: {str(e)}"
+        return f"Error: {str(e)}"
     finally:
-        if 'temp_dir' in locals():
-            try:
-                shutil.rmtree(temp_dir)
-            except Exception as e:
-                logger.error(f"Error cleaning up temporary directory: {e}")
+        try:
+            shutil.rmtree(temp_dir)
+        except Exception as e:
+            logger.error(f"Error cleaning up temporary directory: {e}")
 
 def format_log_output(scenario: AnimationScenario, code: str) -> str:
     """Format scenario and code for display in UI."""
     log_output = f"## Animation Scenario\n\n"
     log_output += f"**Title:** {scenario.title}\n\n"
+    
+    # Check if we have a storyboard in the logger
+    import json
+    import re
+    from io import StringIO
+    import logging
+    
+    # Create a string buffer to capture log output
+    log_buffer = StringIO()
+    log_handler = logging.StreamHandler(log_buffer)
+    logger.addHandler(log_handler)
+    
+    # Extract storyboard from logs if possible
+    storyboard = None
+    log_handler.flush()
+    logs = log_buffer.getvalue()
+    logger.removeHandler(log_handler)
+    
+    json_match = re.search(r'Generated storyboard: (\[.*\])', logs)
+    if json_match:
+        try:
+            storyboard_str = json_match.group(1)
+            storyboard = json.loads(storyboard_str)
+        except:
+            storyboard = None
+    
+    # If storyboard exists, display it
+    if storyboard:
+        log_output += f"## Animation Storyboard\n\n"
+        for i, section in enumerate(storyboard):
+            log_output += f"### {i+1}. {section.get('section_name', 'Section')}\n"
+            log_output += f"**Time:** {section.get('time_range', 'N/A')}\n\n"
+            log_output += f"**Narration:** {section.get('narration', '')}\n\n"
+            log_output += f"**Visuals:** {section.get('visuals', '')}\n\n"
+            log_output += f"**Animations:** {', '.join(section.get('animations', []))}\n\n"
+            
+            if 'key_points' in section and section['key_points']:
+                log_output += f"**Key Points:**\n"
+                if isinstance(section['key_points'], list):
+                    for point in section['key_points']:
+                        log_output += f"- {point}\n"
+                else:
+                    log_output += f"{section['key_points']}\n"
+            
+            log_output += "---\n\n"
+    
+    # Continue with regular output
     log_output += f"**Mathematical Objects:**\n"
     for obj in scenario.objects:
         log_output += f"- {obj}\n"
@@ -252,6 +425,90 @@ def format_log_output(scenario: AnimationScenario, code: str) -> str:
     
     return log_output
 
+# Add a memory class to store conversation history
+class ConversationMemory:
+    def __init__(self):
+        self.history = []
+        self.current_scenario = None
+        self.current_code = None
+    
+    def add_interaction(self, prompt, scenario, code, video_path):
+        self.history.append({
+            "prompt": prompt,
+            "scenario": scenario,
+            "code": code,
+            "video_path": video_path,
+            "timestamp": datetime.now().isoformat()
+        })
+        self.current_scenario = scenario
+        self.current_code = code
+    
+    def get_context_for_refinement(self):
+        if not self.history:
+            return ""
+        
+        # Construct context from the last interaction
+        last = self.history[-1]
+        context = f"Previous prompt: {last['prompt']}\n"
+        if self.current_scenario and hasattr(self.current_scenario, 'title'):
+            context += f"Current animation title: {self.current_scenario.title}\n"
+        return context
+
+# Initialize the memory
+memory = ConversationMemory()
+
+# Function to refine animation based on feedback
+def refine_animation(code: str, feedback: str, quality: str = "medium_quality") -> tuple:
+    """Refine animation based on user feedback."""
+    try:
+        # Get context from memory
+        context = memory.get_context_for_refinement()
+        
+        # Use LLM to refine the code based on feedback
+        response = client.chat.completions.create(
+            model=llm,
+            messages=[
+                {"role": "system", "content": """
+You are a Manim code expert. Your task is to refine animation code based on user feedback.
+Keep the overall structure and purpose of the animation, but implement the changes requested.
+Make sure the code remains valid and follows Manim best practices.
+
+IMPORTANT REQUIREMENTS:
+1. Only return the complete, corrected Manim code
+2. Ensure class name and structure remains consistent
+3. All changes must be compatible with Manim Community edition
+4. Do not explain your changes in comments outside of helpful inline comments
+"""},
+                {"role": "user", "content": f"Here is the current Manim animation code:\n\n```python\n{code}\n```\n\n{context}\nPlease refine this code based on this feedback: \"{feedback}\"\n\nReturn only the improved code."}
+            ]
+        )
+        
+        refined_code = response.choices[0].message.content.strip()
+        
+        # Remove any markdown code formatting if present
+        if refined_code.startswith("```python"):
+            refined_code = refined_code.split("```python", 1)[1]
+        if refined_code.endswith("```"):
+            refined_code = refined_code.rsplit("```", 1)[0]
+        
+        refined_code = refined_code.strip()
+        
+        # Render the refined code
+        video_path = render_manim_video(refined_code, quality)
+        
+        if video_path and not video_path.startswith("Error"):
+            # Update memory with refined code
+            if memory.current_scenario:
+                memory.current_code = refined_code
+            
+            return refined_code, video_path, f"## Refined Animation\n\nFeedback incorporated: \"{feedback}\"\n\nAnimation successfully rendered."
+        else:
+            return refined_code, None, f"## Error in Rendering\n\n```\n{video_path}\n```\n\nPlease check your code for errors."
+    
+    except Exception as e:
+        logger.error(f"Error refining animation: {e}")
+        return code, None, f"## Error in Refinement\n\n```\n{str(e)}\n```\n\nPlease try again with different feedback."
+
 # Function to process user request
 def generate_animation(prompt: str, complexity: str = "medium", quality: str = "medium_quality") -> tuple:
     """Generate an animation from a text prompt."""
@@ -261,139 +518,32 @@ def generate_animation(prompt: str, complexity: str = "medium", quality: str = "
         
         # Run the agent in a way that it will use all necessary tools
         result = manim_agent.run_sync(
-            f"Create a Manim animation based on this description: {prompt}. "
+            f"Generate an animation from this description: {prompt}. "
             f"First, extract the key elements of the scenario. Then, generate "
-            f"Manim code for the animation. Finally, render the animation.",
+            f"the Manim code for the animation. Finally, render the animation.",
             deps=prompt_obj
         )
         
-        # Direct implementation as a fallback
+        # As a fallback, we'll use the direct methods
         scenario = extract_scenario_direct(prompt, complexity)
+        
+        # Fix: Use generate_code_direct instead of generate_code
+        # generate_code is an agent tool that requires a RunContext
         code = generate_code_direct(prompt, scenario, complexity)
+        
         video_path = render_manim_video(code, quality)  # Use the new render function
         
         log_output = format_log_output(scenario, code)
+        
+        # Store in memory
+        memory.add_interaction(prompt, scenario, code, video_path)
         
         return code, video_path, log_output
     except Exception as e:
         logger.error(f"Error generating animation: {e}")
         return f"Error: {str(e)}", None, f"Error occurred: {str(e)}"
 
-def extract_scenario_direct(prompt: str, complexity: str = "medium") -> AnimationScenario:
-    """Direct implementation of scenario extraction without using RunContext."""
-    # Use Together API with OpenAI client
-    response = client.chat.completions.create(
-        model=llm,
-        messages=[
-            {"role": "system", "content": """
-Create a detailed storyboard for a mathematical or physics concept animation. The storyboard should follow a narrative structure with clear sections and timestamps. Think of this as a script for an educational video.
-
-Respond with a JSON object containing:
-- title: A descriptive and engaging title for the animation
-- objects: An array of mathematical objects to be used (e.g., "coordinate_plane", "function_graph", "integral_symbol")
-- transformations: An array of transformations/animations (e.g., "fade_in", "transform", "highlight")
-- equations: An array of mathematical equations to feature (can be null if none)
-- storyboard: An array of sections, each with:
-  * section_name: Name of this section (e.g., "Introduction", "Concept Explanation")
-  * time_range: Approximate timestamp range (e.g., "0:00-1:30")
-  * narration: What the narrator would say during this section
-  * visuals: Description of what should be shown visually
-  * animations: Specific animations to perform in this section
-
-Example response:
-{
-  "title": "Understanding Integrals: A Visual Journey",
-  "objects": ["coordinate_plane", "curve_function", "rectangles", "integral_symbol"],
-  "transformations": ["fade_in", "rectangle_approximation", "limit_process"],
-  "equations": ["∫(a,b) f(x) dx", "F(b) - F(a)"],
-  "storyboard": [
-    {
-      "section_name": "Introduction",
-      "time_range": "0:00-1:00",
-      "narration": "Integrals might seem intimidating at first, but they're actually a powerful tool for measuring areas.",
-      "visuals": "Title screen with 'Understanding Integrals' text, mathematical symbols flowing into view",
-      "animations": ["fade_in_title", "animate_symbols"]
-    },
-    {
-      "section_name": "The Problem of Area",
-      "time_range": "1:00-3:00",
-      "narration": "Imagine we want to find the area under this curve. For regular shapes, we have simple formulas, but what about irregular shapes?",
-      "visuals": "A quadratic function like y = x² on a coordinate plane with highlighted region underneath",
-      "animations": ["draw_coordinate_plane", "plot_function", "highlight_region"]
-    }
-  ]
-}
-
-CREATE A COMPLETE STORYBOARD with 5-7 sections that logically explain the concept. Include an introduction, step-by-step explanation of the concept, and conclusion/applications. Make sure the narration is educational, clear, and builds understanding progressively.
-
-Only respond with the JSON object, nothing else.
-"""
-            },
-            {"role": "user", "content": f"Create a detailed animation storyboard for this concept: '{prompt}'. "
-                                        f"Consider complexity level: {complexity}. "
-                                        f"Include a clear introduction, step-by-step explanations with visual descriptions, "
-                                        f"and practical applications or conclusion."}
-        ]
-    )
-    content = response.choices[0].message.content
-    
-    # Parse the response into structured data
-    try:
-        # Try to extract JSON from the response
-        import json
-        import re
-        
-        # Look for JSON pattern in the response
-        json_match = re.search(r'\{.*\}', content, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(0)
-            scenario_dict = json.loads(json_str)
-            
-            # Extract the basic scenario info we need for the AnimationScenario model
-            title = scenario_dict.get('title', f"{prompt.capitalize()} Visualization")
-            objects = scenario_dict.get('objects', [])
-            transformations = scenario_dict.get('transformations', [])
-            equations = scenario_dict.get('equations', None)
-            
-            # Store the full storyboard in the logger for reference
-            if 'storyboard' in scenario_dict:
-                logger.info(f"Generated storyboard: {json.dumps(scenario_dict['storyboard'], indent=2)}")
-            
-            # Return the AnimationScenario with the basic info
-            return AnimationScenario(
-                title=title,
-                objects=objects,
-                transformations=transformations,
-                equations=equations
-            )
-    except (json.JSONDecodeError, AttributeError, TypeError) as e:
-        logger.error(f"Error parsing scenario JSON: {e}")
-    
-    # Fallback with default values if parsing fails
-    scenario_dict = {
-        "title": f"{prompt.capitalize()} Visualization",
-        "objects": ["circle", "line", "text"],
-        "transformations": ["creation", "movement"],
-        "equations": None
-    }
-    
-    # Extract some likely objects based on common keywords in the prompt
-    if any(kw in prompt.lower() for kw in ["triangle", "pythagorean"]):
-        scenario_dict["objects"] = ["triangle", "square", "text"]
-        scenario_dict["transformations"] = ["creation", "area_calculation"]
-        scenario_dict["equations"] = ["a^2 + b^2 = c^2"]
-    elif any(kw in prompt.lower() for kw in ["circle", "sphere"]):
-        scenario_dict["objects"] = ["circle", "radius_line", "label"]
-        scenario_dict["transformations"] = ["drawing", "scaling"]
-    elif any(kw in prompt.lower() for kw in ["function", "graph", "plot"]):
-        scenario_dict["objects"] = ["axes", "graph", "tangent_line"]
-        scenario_dict["transformations"] = ["plotting", "highlighting"]
-    elif any(kw in prompt.lower() for kw in ["vector", "force"]):
-        scenario_dict["objects"] = ["vector", "point", "line"]
-        scenario_dict["transformations"] = ["translation", "rotation"]
-        
-    return AnimationScenario(**scenario_dict)
-
+# Add the missing generate_code_direct function if it doesn't exist
 def generate_code_direct(prompt: str, scenario: AnimationScenario, complexity: str = "medium") -> str:
     """Direct implementation of code generation without using RunContext."""
     # Use Together API with OpenAI client
@@ -403,7 +553,11 @@ def generate_code_direct(prompt: str, scenario: AnimationScenario, complexity: s
     
     # Try to get storyboard from logger if it exists
     storyboard_info = ""
-
+    from io import StringIO
+    import re
+    import json
+    import logging
+    
     # Create a string buffer to capture log output
     log_buffer = StringIO()
     log_handler = logging.StreamHandler(log_buffer)
@@ -456,7 +610,7 @@ VISUAL STRUCTURE AND LAYOUT:
 9. Scale ALL text elements appropriately (Title: 1.2, Headers: 1.0, Body: 0.8)
 10. Use colors consistently and meaningfully (BLUE for emphasis, RED for important points)
 11. Preventing overlaps of element, choose position for each element carefully, display element and text then move to next element
-             
+
 ANIMATION TECHNIQUES:
 1. Use FadeIn for introductions of new elements
 2. Apply TransformMatchingTex when evolving equations
@@ -490,6 +644,19 @@ RESPOND WITH CLEAN, WELL-STRUCTURED CODE ONLY. DO NOT INCLUDE EXPLANATIONS OUTSI
     )
     return response.choices[0].message.content
 
+# Function to re-render animation with edited code
+def rerender_animation(edited_code: str, quality: str = "medium_quality") -> tuple:
+    """Re-render animation with user-edited code."""
+    try:
+        video_path = render_manim_video(edited_code, quality)
+        if video_path and not video_path.startswith("Error"):
+            return video_path, f"## Re-rendered Animation\n\nCode successfully rendered to video.\n\nCheck the video player for results."
+        else:
+            return None, f"## Error in Rendering\n\n```\n{video_path}\n```\n\nPlease check your code for errors."
+    except Exception as e:
+        logger.error(f"Error re-rendering animation: {e}")
+        return None, f"## Error in Rendering\n\n```\n{str(e)}\n```\n\nPlease check your code for errors."
+
 # Setup Gradio interface
 def gradio_interface(prompt: str, complexity: str = "medium", quality: str = "medium_quality"):
     code, video_path, log_output = generate_animation(prompt, complexity, quality)
@@ -500,49 +667,122 @@ def gradio_interface(prompt: str, complexity: str = "medium", quality: str = "me
 
 # Replace the Gradio interface creation with a Blocks interface for better layout control
 if __name__ == "__main__":
-    with gr.Blocks(title="Manimation Generator", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(title="Manimation Generator", theme=gr.themes.Base()) as demo:
         gr.Markdown("# Manimation Generator")
         gr.Markdown("Generate mathematical animations from text descriptions using AI")
         
+        # Add chat history component
+        chat_history = gr.Chatbot(label="Conversation History", height=300)
+        
         with gr.Row():
-            # Left column: User inputs and code
+            # Left column: User inputs
             with gr.Column(scale=1):
-                prompt = gr.Textbox(
-                    lines=5, 
-                    placeholder="Describe a mathematical concept to animate...", 
-                    label="Concept Description"
-                )
+                # Replace single prompt with tabs for initial creation and feedback
+                with gr.Tabs():
+                    with gr.TabItem("Create New Animation"):
+                        new_prompt = gr.Textbox(
+                            lines=5, 
+                            placeholder="Describe a mathematical concept to animate...", 
+                            label="Concept Description"
+                        )
+                        
+                        with gr.Row():
+                            complexity = gr.Radio(
+                                ["simple", "medium", "complex"], 
+                                value="medium", 
+                                label="Complexity Level"
+                            )
+                            quality = gr.Radio(
+                                ["low_quality", "medium_quality", "high_quality"], 
+                                value="medium_quality", 
+                                label="Video Quality"
+                            )
+                        
+                        generate_btn = gr.Button("Generate Animation", variant="primary")
+                    
+                    with gr.TabItem("Refine Animation"):
+                        feedback = gr.Textbox(
+                            lines=3,
+                            placeholder="Provide feedback or suggestions for the current animation...",
+                            label="Your Feedback"
+                        )
+                        refine_btn = gr.Button("Apply Feedback", variant="secondary")
                 
-                with gr.Row():
-                    complexity = gr.Radio(
-                        ["simple", "medium", "complex"], 
-                        value="medium", 
-                        label="Complexity Level"
-                    )
-                    quality = gr.Radio(
-                        ["low_quality", "medium_quality", "high_quality"], 
-                        value="medium_quality", 
-                        label="Video Quality"
-                    )
-                
-                generate_btn = gr.Button("Generate Animation", variant="primary")
-                
+                # Code editor (common to both tabs)
                 code_output = gr.Code(
                     language="python", 
-                    label="Generated Manim Code", 
-                    lines=20
+                    label="Manim Code (Editable)",
+                    lines=20,
+                    interactive=True
                 )
+                
+                # Add manual rerender button
+                rerender_btn = gr.Button("Re-render Current Code", variant="secondary")
             
-            # Right column: Video and scenario details
+            # Right column: Video and details
             with gr.Column(scale=1):
-                video_output = gr.Video(label="Generated Animation")
-                log_output = gr.Markdown(label="Animation Details")
+                video_output = gr.Video(label="Animation")
+                # Uncomment the log_output component to fix the error
+                log_output = gr.Markdown(label="Details")
+        
+        # Function to update chat history
+        def update_chat_history(history, user_message, bot_message, video_path):
+            history = history or []
+            history.append((user_message, None))  # User message
+            if video_path and not isinstance(video_path, str):
+                # If we have a valid video, include it in the message
+                bot_message = f"{bot_message}\n\n![Animation]({video_path})"
+            history.append((None, bot_message))  # Bot message
+            return history
+        
+        # Function wrappers for UI updates with chat history
+        def generate_and_update_chat(prompt, complexity, quality, history):
+            code, video_path, log = generate_animation(prompt, complexity, quality)
+            new_history = update_chat_history(
+                history, 
+                f"**Create animation:** {prompt}",
+                f"**Generated animation:** {memory.current_scenario.title if memory.current_scenario else 'Animation'}", 
+                video_path
+            )
+            return code, video_path, log, new_history
+        
+        def refine_and_update_chat(code, feedback_text, quality, history):
+            refined_code, video_path, log = refine_animation(code, feedback_text, quality)
+            new_history = update_chat_history(
+                history, 
+                f"**Feedback:** {feedback_text}", 
+                f"**Refined animation based on feedback**", 
+                video_path
+            )
+            return refined_code, video_path, log, new_history
+        
+        def rerender_and_update_chat(code, quality, history):
+            video_path, log = rerender_animation(code, quality)
+            new_history = update_chat_history(
+                history, 
+                "**Re-rendered current code**", 
+                "**Re-rendering complete**", 
+                video_path
+            )
+            return video_path, log, new_history
         
         # Connect the components to the function
         generate_btn.click(
-            fn=gradio_interface,
-            inputs=[prompt, complexity, quality],
-            outputs=[code_output, video_output, log_output]
+            fn=generate_and_update_chat,
+            inputs=[new_prompt, complexity, quality, chat_history],
+            outputs=[code_output, video_output, log_output, chat_history]
+        )
+        
+        refine_btn.click(
+            fn=refine_and_update_chat,
+            inputs=[code_output, feedback, quality, chat_history],
+            outputs=[code_output, video_output, log_output, chat_history]
+        )
+        
+        rerender_btn.click(
+            fn=rerender_and_update_chat,
+            inputs=[code_output, quality, chat_history],
+            outputs=[video_output, log_output, chat_history]
         )
     
     demo.launch()
