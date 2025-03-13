@@ -18,15 +18,22 @@ RUN apt-get update && apt-get install -y \
     gcc \
     libffi-dev \
     git \
+    curl \
+    ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Download and install uv using the recommended approach
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin:${PATH}"
 
-# Install Manim
-RUN pip install --no-cache-dir manim
+# Copy requirements file and install Python dependencies using uv
+COPY requirements.txt .
+RUN uv pip install --no-cache -r requirements.txt
+
+# Install Manim using uv
+RUN uv pip install --no-cache manim
 
 # Copy the application files
 COPY manimations /app/manimations
@@ -45,4 +52,4 @@ ENV MPLBACKEND=Agg
 EXPOSE 7860
 
 # Command to run the application
-CMD ["python", "manimations/ai_agent.py"]
+CMD ["uv", "run", "python", "manimations/ai_agent.py"]
