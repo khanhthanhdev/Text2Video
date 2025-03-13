@@ -784,6 +784,18 @@ if __name__ == "__main__":
             inputs=[code_output, quality, chat_history],
             outputs=[video_output, log_output, chat_history]
         )
+        
+        # Add footer with social media links
+        with gr.Row(equal_height=True):
+            gr.Markdown("""
+                ### Connect With Us
+                
+                [<img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" width="30"/> GitHub](https://github.com/khanhthanhdev/Text2Video) | 
+                [<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/600px-Facebook_Logo_%282019%29.png" width="30"/> Facebook](https://facebook.com/khanhthanhdev)
+                
+                ---
+                *Created with Manim and AI - Share your mathematical animations with the world!*
+            """)
     
-    demo.launch()
+    demo.launch(server_name="0.0.0.0", server_port=7860)
 
