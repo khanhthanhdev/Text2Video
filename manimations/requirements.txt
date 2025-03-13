@@ -1,6 +1,0 @@
-gradio
-openai
-python-dotenv
-manim
-pydantic
-pydantic-ai
