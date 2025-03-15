@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-# Install all dependencies in one layer
+# Install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libffi-dev \
@@ -25,11 +25,10 @@ ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Copy virtual environment and project files
+# Copy dependencies
 COPY requirements.txt .
 
-
-# Activate the existing venv and install any missing packages
+# Activate venv and install dependencies
 RUN uv venv /app/manimations \
     && . /app/manimations/bin/activate \
     && uv pip install --no-cache -r requirements.txt \
@@ -37,7 +36,8 @@ RUN uv venv /app/manimations \
 
 ENV PATH="/app/manimations/bin:${PATH}"
 COPY *.py /app/
-# Set environment variables
+
+# Set additional environment variables
 ENV PYTHONPATH=/app
 ENV MPLBACKEND=Agg
 ENV GRADIO_SERVER_NAME=0.0.0.0
@@ -46,11 +46,12 @@ ENV GRADIO_SERVER_PORT=7860
 # Create directory for generated videos
 RUN mkdir -p /app/generated_videos
 
-# Copy .env file
-COPY .env /app/.env
+# Generatenv file with API_KEY
+ARG API_KEY
+RUN echo "TOGETHER_API_KEY=cee1393e4d4e7a94121882052a03f30a1d51f5dbd251140844ec616e17f60e9b" > /app/.env
 
 # Expose the port for the Gradio interface
 EXPOSE 7860
 
-# Command to run the application with the virtual environment
+# Command to run the application
 CMD ["/app/manimations/bin/python", "ai_agent.py"]
