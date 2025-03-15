@@ -49,6 +49,27 @@ class AnimationResult(BaseModel):
     code: str = Field(..., description="Generated Manim code")
     video_path: str = Field(..., description="Path to the generated video file")
 
+# New layout configuration model
+class LayoutConfiguration(BaseModel):
+    """Configuration for layout optimization of animation elements."""
+    min_spacing: float = Field(0.5, description="Minimum spacing between elements in Manim units")
+    vertical_alignment: List[str] = Field(["TOP", "CENTER", "BOTTOM"], description="Vertical alignment options")
+    horizontal_alignment: List[str] = Field(["LEFT", "CENTER", "RIGHT"], description="Horizontal alignment options")
+    staggered_animations: bool = Field(True, description="Whether to stagger animations for better clarity")
+    screen_regions: List[str] = Field(["UL", "UP", "UR", "LEFT", "CENTER", "RIGHT", "DL", "DOWN", "DR"], 
+                                     description="Screen regions for element positioning")
+    canvas_size: tuple = Field((14, 8), description="Canvas size in Manim units (width, height)")
+
+# New evaluation result model
+class EvaluationResult(BaseModel):
+    """Results of code evaluation."""
+    has_errors: bool = Field(False, description="Whether the code has any errors")
+    syntax_errors: List[str] = Field([], description="Syntax errors found in the code")
+    positioning_issues: List[str] = Field([], description="Issues with element positioning")
+    overlap_issues: List[str] = Field([], description="Potential element overlaps")
+    suggestions: List[str] = Field([], description="Suggestions for improvement")
+    fixed_code: Optional[str] = Field(None, description="Fixed code if available")
+
 model = OpenAIModel(
     'deepseek-ai/DeepSeek-V3',
     provider=OpenAIProvider(
@@ -63,6 +84,30 @@ manim_agent = Agent(
         "You are a specialized AI agent for creating mathematical animations. "
         "Your goal is to convert user descriptions into precise Manim code "
         "that visualizes mathematical and physics concepts clearly and elegantly."
+    ),
+)
+
+# Create a layout optimization agent
+layout_agent = Agent(
+    model,
+    deps_type=AnimationPrompt,
+    system_prompt=(
+        "You are a specialized AI agent for optimizing layout and animations in Manim code. "
+        "Your goal is to analyze and improve element positioning, prevent overlaps, "
+        "and create step-by-step animations that are clear and educational. "
+        "You understand how to use Manim's coordinate system and positioning methods effectively."
+    ),
+)
+
+# Create an evaluation agent
+evaluation_agent = Agent(
+    model,
+    deps_type=AnimationPrompt,
+    system_prompt=(
+        "You are a specialized AI agent for evaluating Manim animation code. "
+        "Your goal is to detect errors, check for proper element positioning, "
+        "and ensure the code follows best practices for clear mathematical animations. "
+        "You understand Manim's syntax and common pitfalls in animation creation."
     ),
 )
 
@@ -97,6 +142,50 @@ def add_complexity_guidance(ctx: RunContext[AnimationPrompt]) -> str:
 def add_timestamp() -> str:
     """Add a timestamp to the system prompt."""
     return f"Current date and time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+@layout_agent.system_prompt
+def add_layout_guidance(ctx: RunContext[AnimationPrompt]) -> str:
+    """Add layout guidance based on complexity."""
+    complexity = ctx.deps.complexity
+    if complexity == "simple":
+        return (
+            "Optimize layout for simple animations with minimal elements. "
+            "Use large spacing and clear positioning. "
+            "Each step should be very distinct and have ample wait time between transitions."
+        )
+    elif complexity == "complex":
+        return (
+            "Optimize layout for complex animations with many elements. "
+            "Use thoughtful positioning with elements grouped by relevance. "
+            "Break animations into logical steps with clear transitions between concepts."
+        )
+    else:  # medium
+        return (
+            "Balance spacing and density in your layout. "
+            "Position elements with sufficient spacing while utilizing screen space efficiently. "
+            "Present animations in a step-by-step manner with appropriate timing."
+        )
+
+@evaluation_agent.system_prompt
+def add_evaluation_guidance(ctx: RunContext[AnimationPrompt]) -> str:
+    """Add evaluation guidance based on complexity."""
+    complexity = ctx.deps.complexity
+    if complexity == "simple":
+        return (
+            "Focus on finding basic errors and ensuring clear positioning of minimal elements. "
+            "Simple animations should have ample spacing and no overlapping elements."
+        )
+    elif complexity == "complex":
+        return (
+            "Look for subtle issues in complex code, including potential element overlaps "
+            "when multiple transformations occur. Check for proper timing between steps "
+            "and verify that complex mathematical notations are correctly formatted."
+        )
+    else:  # medium
+        return (
+            "Balance between checking for technical errors and verifying good animation principles. "
+            "Ensure elements are properly spaced and animations follow a logical step-by-step flow."
+        )
 
 @manim_agent.tool
 def extract_scenario(ctx: RunContext[AnimationPrompt]) -> AnimationScenario:
@@ -272,6 +361,302 @@ def generate_code(ctx: RunContext[AnimationPrompt], scenario: AnimationScenario)
         ]
     )
     return response.choices[0].message.content
+
+@layout_agent.tool
+def analyze_element_layout(ctx: RunContext[AnimationPrompt], code: str) -> dict:
+    """Analyze Manim code for potential layout issues and element positioning."""
+    prompt = ctx.deps
+    
+    response = client.chat.completions.create(
+        model=llm,
+        messages=[
+            {"role": "system", "content": """
+Analyze Manim code for layout issues and element positioning. Look for:
+1. Overlapping elements or text
+2. Elements positioned too close to each other
+3. Elements positioned off-screen or at extreme edges
+4. Poor use of screen space
+5. Too many elements appearing simultaneously
+6. Lack of clear positioning commands
+
+Respond with a JSON object containing:
+- issues: List of detected layout issues
+- suggestions: List of positioning improvements
+- animation_flow: List of animation sequence improvements
+- spacing: Suggested minimum spacing between elements
+- regions: Suggested screen regions to use for key elements
+"""
+            },
+            {"role": "user", "content": f"Analyze this Manim code for layout issues:\n\n```python\n{code}\n```\n\nPrompt: {prompt.description}, Complexity: {prompt.complexity}"}
+        ]
+    )
+    
+    content = response.choices[0].message.content
+    
+    try:
+        # Extract JSON from response
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            analysis = json.loads(json_str)
+            return analysis
+    except Exception as e:
+        logger.error(f"Error parsing layout analysis: {e}")
+    
+    # Fallback with default values
+    return {
+        "issues": ["Potential element overlap", "Undefined positioning"],
+        "suggestions": ["Use explicit coordinates for all elements", "Add spacing between elements"],
+        "animation_flow": ["Break complex animations into steps", "Add wait time between steps"],
+        "spacing": 1.0,
+        "regions": ["UP", "DOWN", "LEFT", "RIGHT", "CENTER"]
+    }
+
+@layout_agent.tool
+def optimize_layout(ctx: RunContext[AnimationPrompt], code: str, analysis: dict) -> str:
+    """Optimize the layout of elements in Manim code."""
+    prompt = ctx.deps
+    
+    # Serialize the analysis for the prompt
+    analysis_str = json.dumps(analysis, indent=2)
+    
+    response = client.chat.completions.create(
+        model=llm,
+        messages=[
+            {"role": "system", "content": """
+Optimize the layout and animation flow in Manim code. Follow these rules:
+1. Explicitly position ALL elements with coordinates (e.g., .move_to(), .shift(), .to_edge())
+2. Ensure minimum spacing (1.0 units) between all elements
+3. Use screen regions effectively (UP, DOWN, LEFT, RIGHT, UL, UR, DL, DR)
+4. Group related elements using VGroup and arrange them logically
+5. Break complex animations into steps with self.wait() between them
+6. Use sequential animations for clarity (one concept at a time)
+7. Use consistent positioning and transitions throughout the animation
+8. Add comments explaining positioning choices
+
+Preserve all mathematical content and educational purpose of the animation.
+Only make changes to improve layout, positioning, and animation flow.
+"""
+            },
+            {"role": "user", "content": f"Original code:\n\n```python\n{code}\n```\n\nOptimize the layout based on this analysis:\n{analysis_str}\n\nPrompt: {prompt.description}, Complexity: {prompt.complexity}\n\nReturn the optimized code that fixes all layout issues."}
+        ]
+    )
+    
+    optimized_code = response.choices[0].message.content
+    
+    # Clean up the response to extract just the code
+    if "```python" in optimized_code:
+        optimized_code = optimized_code.split("```python", 1)[1]
+    if "```" in optimized_code:
+        optimized_code = optimized_code.split("```", 1)[0]
+    
+    return optimized_code.strip()
+
+@evaluation_agent.tool
+def check_syntax_errors(ctx: RunContext[AnimationPrompt], code: str) -> List[str]:
+    """Check for Python and Manim-specific syntax errors."""
+    prompt = ctx.deps
+    
+    response = client.chat.completions.create(
+        model=llm,
+        messages=[
+            {"role": "system", "content": """
+Analyze this Manim code for syntax errors and logical mistakes. Look for:
+
+1. Python syntax errors (missing colons, parentheses, indentation problems)
+2. Manim-specific errors (incorrect class usage, invalid animation methods)
+3. Undefined variables or objects that are used before definition
+4. Incorrect parameter types or values
+5. Missing imports or misused Manim classes
+6. LaTeX syntax errors in MathTex objects
+7. Animation errors (using wrong objects in animations, incorrect method calls)
+
+For each error found, provide:
+1. The line number or code region with the error
+2. A description of what's wrong
+3. A suggested fix
+
+Be thorough but only focus on actual errors, not style issues.
+"""
+            },
+            {"role": "user", "content": f"Check this Manim code for syntax errors:\n\n```python\n{code}\n```\n\nPrompt: {prompt.description}, Complexity: {prompt.complexity}"}
+        ]
+    )
+    
+    # Extract errors from response
+    error_content = response.choices[0].message.content
+    error_lines = error_content.split('\n')
+    
+    # Filter for actual errors
+    errors = []
+    current_error = ""
+    for line in error_lines:
+        if line.strip().startswith(("Error", "Issue", "Problem", "Bug", "Line", "1.", "2.", "3.", "4.", "5.")):
+            if current_error:
+                errors.append(current_error.strip())
+            current_error = line.strip()
+        elif current_error and line.strip():
+            current_error += " " + line.strip()
+    
+    # Add the last error if there is one
+    if current_error:
+        errors.append(current_error.strip())
+    
+    return errors
+
+@evaluation_agent.tool
+def check_positioning(ctx: RunContext[AnimationPrompt], code: str) -> dict:
+    """Check for proper positioning and potential overlaps in the animation."""
+    prompt = ctx.deps
+    
+    response = client.chat.completions.create(
+        model=llm,
+        messages=[
+            {"role": "system", "content": """
+Analyze this Manim code specifically for positioning and spacing issues. Look for:
+
+1. Objects without explicit position commands (move_to, shift, to_edge, etc.)
+2. Elements that might overlap based on their coordinates
+3. Text or equations positioned too close to each other
+4. Elements positioned too close to the edge of the screen
+5. Improper grouping of related elements
+6. Elements with undefined positioning that might appear at origin (0,0)
+7. Animations where multiple elements move to the same location
+
+Analyze the coordinates and create a mental map of where objects are positioned.
+Flag any positions where elements might overlap or be too close (less than 1.0 units apart).
+
+Respond with a JSON object containing:
+- positioning_issues: List of positioning problems found
+- overlap_issues: List of specific coordinates or elements that might overlap
+- suggestions: Specific suggestions to improve positioning
+"""
+            },
+            {"role": "user", "content": f"Analyze this Manim code for positioning and spacing issues:\n\n```python\n{code}\n```\n\nPrompt: {prompt.description}, Complexity: {prompt.complexity}"}
+        ]
+    )
+    
+    content = response.choices[0].message.content
+    
+    try:
+        # Extract JSON from response
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            positioning_analysis = json.loads(json_str)
+            return positioning_analysis
+    except Exception as e:
+        logger.error(f"Error parsing positioning analysis: {e}")
+    
+    # If no valid JSON is found, extract information manually
+    positioning_issues = []
+    overlap_issues = []
+    suggestions = []
+    
+    # Simple pattern matching to extract issues
+    for line in content.split('\n'):
+        line = line.strip()
+        if "position" in line.lower() or "coordinate" in line.lower() or "overlap" in line.lower():
+            if line.startswith(("- ", "* ", "1. ", "2. ")):
+                positioning_issues.append(line.lstrip("- *123456789. "))
+        if "overlap" in line.lower():
+            if line.startswith(("- ", "* ", "1. ", "2. ")):
+                overlap_issues.append(line.lstrip("- *123456789. "))
+        if "suggest" in line.lower() or "should" in line.lower() or "could" in line.lower():
+            if line.startswith(("- ", "* ", "1. ", "2. ")):
+                suggestions.append(line.lstrip("- *123456789. "))
+    
+    return {
+        "positioning_issues": positioning_issues,
+        "overlap_issues": overlap_issues,
+        "suggestions": suggestions
+    }
+
+@evaluation_agent.tool
+def fix_code_issues(ctx: RunContext[AnimationPrompt], code: str, syntax_errors: List[str], positioning_issues: dict) -> str:
+    """Fix detected issues in the code."""
+    prompt = ctx.deps
+    
+    # Format issues for the prompt
+    syntax_errors_str = "\n".join([f"- {error}" for error in syntax_errors])
+    
+    positioning_issues_str = ""
+    if "positioning_issues" in positioning_issues:
+        positioning_issues_str += "\nPositioning Issues:\n" + "\n".join([f"- {issue}" for issue in positioning_issues["positioning_issues"]])
+    
+    if "overlap_issues" in positioning_issues:
+        positioning_issues_str += "\nOverlap Issues:\n" + "\n".join([f"- {issue}" for issue in positioning_issues["overlap_issues"]])
+    
+    if "suggestions" in positioning_issues:
+        positioning_issues_str += "\nSuggestions:\n" + "\n".join([f"- {suggestion}" for suggestion in positioning_issues["suggestions"]])
+    
+    response = client.chat.completions.create(
+        model=llm,
+        messages=[
+            {"role": "system", "content": """
+Fix the provided Manim code by addressing all identified issues. Follow these guidelines:
+
+1. Fix all syntax errors and logical mistakes first
+2. Fix positioning issues by adding explicit positioning commands
+3. Resolve element overlaps by repositioning elements with adequate spacing
+4. Implement all positioning suggestions to improve clarity
+5. Maintain the original educational intent and mathematical content
+6. Ensure all animations follow a logical step-by-step flow
+7. Add comments explaining your fixes for complex changes
+
+Return the complete, corrected code ready for rendering.
+"""
+            },
+            {"role": "user", "content": 
+                f"Fix the following Manim code by addressing these issues:\n\n"
+                f"Syntax Errors:\n{syntax_errors_str}\n\n"
+                f"Positioning Issues:{positioning_issues_str}\n\n"
+                f"Original Code:\n```python\n{code}\n```\n\n"
+                f"Original Prompt: {prompt.description}, Complexity: {prompt.complexity}\n\n"
+                f"Return the complete fixed code."
+            }
+        ]
+    )
+    
+    fixed_code = response.choices[0].message.content
+    
+    # Clean up the response to extract just the code
+    if "```python" in fixed_code:
+        fixed_code = fixed_code.split("```python", 1)[1]
+    if "```" in fixed_code:
+        fixed_code = fixed_code.split("```", 1)[0]
+    
+    return fixed_code.strip()
+
+@evaluation_agent.tool
+def evaluate_code(ctx: RunContext[AnimationPrompt], code: str) -> EvaluationResult:
+    """Evaluate Manim code for errors and positioning issues."""
+    # Check for syntax errors
+    syntax_errors = check_syntax_errors(ctx, code)
+    
+    # Check for positioning issues
+    positioning_analysis = check_positioning(ctx, code)
+    
+    positioning_issues = positioning_analysis.get("positioning_issues", [])
+    overlap_issues = positioning_analysis.get("overlap_issues", [])
+    suggestions = positioning_analysis.get("suggestions", [])
+    
+    # Determine if there are errors
+    has_errors = len(syntax_errors) > 0 or len(positioning_issues) > 0 or len(overlap_issues) > 0
+    
+    # If there are errors, fix the code
+    fixed_code = None
+    if has_errors:
+        fixed_code = fix_code_issues(ctx, code, syntax_errors, positioning_analysis)
+    
+    return EvaluationResult(
+        has_errors=has_errors,
+        syntax_errors=syntax_errors,
+        positioning_issues=positioning_issues,
+        overlap_issues=overlap_issues,
+        suggestions=suggestions,
+        fixed_code=fixed_code
+    )
 
 @manim_agent.tool_plain
 def render_animation(code: str, quality="medium_quality") -> str:
@@ -461,14 +846,23 @@ memory = ConversationMemory()
 def refine_animation(code: str, feedback: str, quality: str = "medium_quality") -> tuple:
     """Refine animation based on user feedback."""
     try:
-        # Get context from memory
-        context = memory.get_context_for_refinement()
-        
-        # Use LLM to refine the code based on feedback
-        response = client.chat.completions.create(
-            model=llm,
-            messages=[
-                {"role": "system", "content": """
+        # Special case for layout/positioning feedback
+        if any(keyword in feedback.lower() for keyword in ["position", "layout", "overlap", "spacing", "step by step", "clear"]):
+            # Try to apply specialized layout optimization
+            prompt = memory.history[-1]["prompt"] if memory.history else "Mathematical animation"
+            complexity = "medium"  # Default complexity
+            
+            refined_code = optimize_element_positioning(code, prompt, complexity)
+        else:
+            # Original feedback processing code
+            # Get context from memory
+            context = memory.get_context_for_refinement()
+            
+            # Use LLM to refine the code based on feedback
+            response = client.chat.completions.create(
+                model=llm,
+                messages=[
+                    {"role": "system", "content": """
 You are a Manim code expert. Your task is to refine animation code based on user feedback.
 Keep the overall structure and purpose of the animation, but implement the changes requested.
 Make sure the code remains valid and follows Manim best practices.
@@ -478,20 +872,21 @@ IMPORTANT REQUIREMENTS:
 2. Ensure class name and structure remains consistent
 3. All changes must be compatible with Manim Community edition
 4. Do not explain your changes in comments outside of helpful inline comments
-"""},
-                {"role": "user", "content": f"Here is the current Manim animation code:\n\n```python\n{code}\n```\n\n{context}\nPlease refine this code based on this feedback: \"{feedback}\"\n\nReturn only the improved code."}
-            ]
-        )
-        
-        refined_code = response.choices[0].message.content.strip()
-        
-        # Remove any markdown code formatting if present
-        if refined_code.startswith("```python"):
-            refined_code = refined_code.split("```python", 1)[1]
-        if refined_code.endswith("```"):
-            refined_code = refined_code.rsplit("```", 1)[0]
-        
-        refined_code = refined_code.strip()
+"""
+                    },
+                    {"role": "user", "content": f"Here is the current Manim animation code:\n\n```python\n{code}\n```\n\n{context}\nPlease refine this code based on this feedback: \"{feedback}\"\n\nReturn only the improved code."}
+                ]
+            )
+            
+            refined_code = response.choices[0].message.content.strip()
+            
+            # Remove any markdown code formatting if present
+            if refined_code.startswith("```python"):
+                refined_code = refined_code.split("```python", 1)[1]
+            if refined_code.endswith("```"):
+                refined_code = refined_code.rsplit("```", 1)[0]
+            
+            refined_code = refined_code.strip()
         
         # Render the refined code
         video_path = render_manim_video(refined_code, quality)
@@ -602,14 +997,26 @@ VISUAL STRUCTURE AND LAYOUT:
 1. Structure the animation as a narrative with clear sections (introduction, explanation, conclusion)
 2. Create title screens with engaging typography and animations
 3. Position ALL elements with EXPLICIT coordinates using shift() or move_to() methods
-4. Ensure AT LEAST 1.5 units of space between separate visual elements
+4. Ensure AT LEAST 2.0 units of space between separate visual elements
 5. For equations, use MathTex with proper scaling (scale(0.8) for complex equations)
 6. Group related objects using VGroup and arrange them with arrange() method
 7. When showing multiple equations, use arrange_in_grid() or arrange() with DOWN/RIGHT
 8. For graphs, set explicit x_range and y_range with generous padding around functions
 9. Scale ALL text elements appropriately (Title: 1.2, Headers: 1.0, Body: 0.8)
 10. Use colors consistently and meaningfully (BLUE for emphasis, RED for important points)
-11. Preventing overlaps of element, choose position for each element carefully, display element and text then move to next element
+
+CRITICAL: ELEMENT MANAGEMENT AND STEP-BY-STEP REQUIREMENTS:
+1. NEVER show too many elements on screen at once - max 3-4 related elements at any time
+2. ALWAYS use self.play(FadeOut(element)) to explicitly remove elements when moving to a new concept
+3. DO NOT use self.clear() as it doesn't actually remove elements from the scene
+4. Implement strict SEQUENTIAL animation - introduce only ONE concept or element at a time
+5. Use self.wait(0.7) to 1.5 for short pauses and self.wait(2) for important concepts
+6. Organize the screen into distinct regions (TOP for titles, CENTER for main content, BOTTOM for explanations)
+7. For sequential steps in derivations or proofs, use transform_matching_tex() to smoothly evolve equations
+8. Use MoveToTarget() for repositioning elements that need to stay on screen between steps
+9. At the end of each section, EXPLICITLY remove all elements with self.play(FadeOut(elem1, elem2, ...))
+10. When positioning new elements, verify they won't overlap existing elements
+11. For elements that must appear together, use VGroup but animate their creation one by one
 
 ANIMATION TECHNIQUES:
 1. Use FadeIn for introductions of new elements
@@ -617,7 +1024,7 @@ ANIMATION TECHNIQUES:
 3. Use Create for drawing geometric objects
 4. Implement smooth transitions between different concepts with ReplacementTransform
 5. Highlight important parts with Indicate or Circumscribe
-6. Add pauses (self.wait()) after important points for comprehension
+6. Add appropriate pauses: self.wait(0.7) after minor steps, self.wait(1.5) after important points
 7. For complex animations, break them into smaller steps with appropriate timing
 8. Use MoveAlongPath for demonstrating motion or change over time
 9. Create emphasis with scale_about_point or succession of animations
@@ -642,7 +1049,224 @@ RESPOND WITH CLEAN, WELL-STRUCTURED CODE ONLY. DO NOT INCLUDE EXPLANATIONS OUTSI
             {"role": "user", "content": f"Create a comprehensive Manim animation for '{scenario.title}' that teaches this concept: '{prompt}'. \n\nUse these mathematical objects: {objects_str}. \nImplement these transformations/animations: {transformations_str}. \nFeature these equations: {equations_str}. \n\nComplexity level: {complexity}. \n\nEnsure all elements are properly spaced and positioned to prevent overlap. Structure the animation with a clear introduction, step-by-step explanation, and conclusion."}
         ]
     )
-    return response.choices[0].message.content
+    
+    initial_code = response.choices[0].message.content
+    
+    # Analyze and optimize the layout using the layout agent
+    try:
+        # Create prompt object for context
+        prompt_obj = AnimationPrompt(description=prompt, complexity=complexity)
+        
+        # Fix: Don't pass 'code' as a keyword argument to run_sync
+        # Instead, include the code in the prompt text
+        layout_result = layout_agent.run_sync(
+            f"Analyze and optimize the layout of this Manim code for the prompt: {prompt}\n\n"
+            f"```python\n{initial_code}\n```",
+            deps=prompt_obj
+        )
+        
+        # If the layout agent successfully returned optimized code, use that
+        if isinstance(layout_result, str) and "from manim import" in layout_result:
+            # Extract the code part if it returned markdown-formatted code
+            if "```python" in layout_result:
+                layout_result = layout_result.split("```python", 1)[1].split("```", 1)[0].strip()
+            return layout_result
+        
+        # Fix: Don't manually create a RunContext
+        # Instead use a direct approach for optimization
+        optimized_code = direct_optimize_layout(initial_code, prompt, complexity)
+        
+        if optimized_code and "from manim import" in optimized_code:
+            return optimized_code
+    except Exception as e:
+        logger.error(f"Error during layout optimization: {e}")
+        # If optimization fails, return the initial code
+        
+    return initial_code
+
+# Add direct implementation of layout optimization functions
+def direct_analyze_layout(code: str, prompt: str, complexity: str = "medium") -> dict:
+    """Analyze Manim code for layout issues without using agent tools."""
+    try:
+        response = client.chat.completions.create(
+            model=llm,
+            messages=[
+                {"role": "system", "content": """
+Analyze Manim code for layout issues and element positioning. Look for:
+1. Overlapping elements or text
+2. Elements positioned too close to each other
+3. Elements positioned off-screen or at extreme edges
+4. Poor use of screen space
+5. Too many elements appearing simultaneously
+6. Lack of clear positioning commands
+
+Respond with a JSON object containing:
+- issues: List of detected layout issues
+- suggestions: List of positioning improvements
+- animation_flow: List of animation sequence improvements
+- spacing: Suggested minimum spacing between elements
+- regions: Suggested screen regions to use for key elements
+"""
+                },
+                {"role": "user", "content": f"Analyze this Manim code for layout issues:\n\n```python\n{code}\n```\n\nPrompt: {prompt}, Complexity: {complexity}"}
+            ]
+        )
+        
+        content = response.choices[0].message.content
+        
+        try:
+            # Extract JSON from response
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(0)
+                analysis = json.loads(json_str)
+                return analysis
+        except Exception as e:
+            logger.error(f"Error parsing layout analysis: {e}")
+        
+        # Fallback with default values
+        return {
+            "issues": ["Potential element overlap", "Undefined positioning"],
+            "suggestions": ["Use explicit coordinates for all elements", "Add spacing between elements"],
+            "animation_flow": ["Break complex animations into steps", "Add wait time between steps"],
+            "spacing": 1.0,
+            "regions": ["UP", "DOWN", "LEFT", "RIGHT", "CENTER"]
+        }
+    except Exception as e:
+        logger.error(f"Error in direct_analyze_layout: {e}")
+        return {
+            "issues": ["Analysis failed"],
+            "suggestions": ["Check code manually"],
+            "animation_flow": [],
+            "spacing": 1.0,
+            "regions": ["CENTER"]
+        }
+
+def direct_optimize_layout(code: str, prompt: str, complexity: str = "medium") -> str:
+    """Optimize layout in Manim code without using agent tools."""
+    try:
+        # First, analyze the layout
+        analysis = direct_analyze_layout(code, prompt, complexity)
+        
+        # Serialize the analysis for the prompt
+        analysis_str = json.dumps(analysis, indent=2)
+        
+        response = client.chat.completions.create(
+            model=llm,
+            messages=[
+                {"role": "system", "content": """
+Optimize the layout and animation flow in Manim code. Follow these strict rules:
+
+ELEMENT POSITIONING AND SPACING:
+1. Explicitly position ALL elements with coordinates (e.g., .move_to(), .shift(), .to_edge())
+2. Ensure minimum spacing of 2.0 units between all elements
+3. Use screen regions effectively (UP, DOWN, LEFT, RIGHT, UL, UR, DL, DR)
+4. Group related elements using VGroup and arrange them with arrange(direction, buff=1.0)
+5. Add buffer around elements: .move_to(point).shift(UP*0.5) to ensure spacing
+6. Use coordinate grid to map element positions: x values from -6 to 6, y values from -3.5 to 3.5
+7. Shrink elements to 80% size when needed with scale(0.8)
+
+STEP-BY-STEP ANIMATION FLOW:
+1. CRITICAL: Use self.play(FadeOut(element)) to explicitly remove elements when done with them
+2. DO NOT use self.clear() as it doesn't actually remove elements from the scene
+3. Divide the animation into clear sequences with comments like "# Step 1: Introduction"
+4. Use appropriate wait times: self.wait(0.7) for minor steps, self.wait(1.5) for new concepts
+5. At the end of each major section, add: self.play(FadeOut(*[all_objects_in_current_section]))
+6. Max 3-4 elements should be visible simultaneously
+7. For each step, state element positions clearly in comments
+8. Use sequential animations (one element at a time) rather than AnimationGroup
+
+FIXES FOR COMMON PROBLEMS:
+1. Add .to_edge(direction) to all Tex/MathTex elements
+2. For Title elements, always use .to_edge(UP)
+3. For equations, use .scale(0.8).next_to(previous_element, DOWN*2)
+4. For diagrams, center them with .move_to(ORIGIN)
+5. For graphs, explicitly set axes ranges with x_range=[-5, 5, 1], y_range=[-3, 3, 1]
+6. For multiple text elements, align them with .align_to(reference, direction)
+7. For explanatory text, position at the bottom with .to_edge(DOWN)
+8. Before introducing new sections, add: self.play(FadeOut(*[all_current_elements]))
+
+Preserve all mathematical content and educational purpose of the animation.
+Only make changes to improve layout, positioning, and animation flow.
+"""
+                },
+                {"role": "user", "content": f"Original code:\n\n```python\n{code}\n```\n\nOptimize the layout based on this analysis:\n{analysis_str}\n\nPrompt: {prompt}, Complexity: {complexity}\n\nReturn the optimized code that ensures a step-by-step animation with proper spacing and element removal to prevent overlaps."}
+            ]
+        )
+        
+        optimized_code = response.choices[0].message.content
+        
+        # Clean up the response to extract just the code
+        if "```python" in optimized_code:
+            optimized_code = optimized_code.split("```python", 1)[1]
+        if "```" in optimized_code:
+            optimized_code = optimized_code.split("```", 1)[0]
+        
+        return optimized_code.strip()
+    except Exception as e:
+        logger.error(f"Error in direct_optimize_layout: {e}")
+        return code  # Return original code if optimization fails
+
+# Add a new function to specifically check and fix positioning issues in existing code
+def optimize_element_positioning(code: str, prompt: str, complexity: str = "medium") -> str:
+    """Analyze and optimize element positioning in Manim code."""
+    try:
+        response = client.chat.completions.create(
+            model=llm,
+            messages=[
+                {"role": "system", "content": """
+You are a Manim layout expert. Review the provided code and improve element positioning and animation flow.
+Focus on these critical aspects:
+
+1. STEP-BY-STEP ANIMATION:
+   - CRITICAL: Add explicit self.play(FadeOut(...)) to remove elements when they're no longer needed
+   - DO NOT use self.clear() as it doesn't actually remove elements from the scene
+   - Ensure only 3-4 related elements are visible at once
+   - Sequence animations to show just one new element at a time
+   - Use appropriate wait times: self.wait(0.7) for minor points, self.wait(1.5) for important concepts
+
+2. POSITIONING AND SPACING:
+   - Position ALL elements with explicit coordinates: move_to(), shift(), to_edge(), etc.
+   - Maintain AT LEAST 2.0 units of space between elements
+   - Use all screen regions effectively: UP, DOWN, LEFT, RIGHT, UL, UR, DL, DR, etc.
+   - Use coordinate grid system: x values from -6 to 6, y values from -3.5 to 3.5
+   - Scale elements with .scale(0.8) when needed to prevent overlap
+
+3. ELEMENT ORGANIZATION:
+   - Group related elements using VGroup and arrange them with arrange(direction, buff=1.0)
+   - Position titles at the top with .to_edge(UP)
+   - Position explanatory text at the bottom with .to_edge(DOWN)
+   - Center diagrams with .move_to(ORIGIN)
+   - For multiple text elements, use .align_to(reference, direction)
+
+4. ELEMENT CLEANUP:
+   - At the end of each section, add: self.play(FadeOut(*[all_objects_in_section]))
+   - For elements that transform, use ReplacementTransform not Transform
+   - Keep track of all created elements and remove them when not needed
+   - Add comments before element removal: "# Remove all elements from this section"
+
+DO NOT change the mathematical content or educational purpose of the animation.
+Only modify layout, positioning, and animation flow to ensure a clear, step-by-step experience.
+
+Return ONLY the improved code without explanations outside of code comments.
+"""
+                },
+                {"role": "user", "content": f"Review and optimize element positioning and step-by-step flow in this Manim code:\n\n```python\n{code}\n```\n\nThe animation is about: '{prompt}' with complexity level '{complexity}'.\n\nFocus on preventing element overlap by ensuring proper spacing, explicit positioning, AND ADDING FadeOut() calls to remove elements when moving between sections. DO NOT use self.clear() since it doesn't work properly."}
+            ]
+        )
+        
+        optimized_code = response.choices[0].message.content
+        
+        # Clean up the response to extract just the code
+        if "```python" in optimized_code:
+            optimized_code = optimized_code.split("```python", 1)[1]
+        if "```" in optimized_code:
+            optimized_code = optimized_code.split("```", 1)[0]
+        
+        return optimized_code.strip()
+    except Exception as e:
+        logger.error(f"Error optimizing element positioning: {e}")
+        return code  # Return original code if optimization fails
 
 # Function to re-render animation with edited code
 def rerender_animation(edited_code: str, quality: str = "medium_quality") -> tuple:
@@ -664,6 +1288,152 @@ def gradio_interface(prompt: str, complexity: str = "medium", quality: str = "me
         return code, video_path, log_output
     else:
         return code, None, log_output
+
+# Function to evaluate and fix Manim code
+def evaluate_and_fix_manim_code(code: str, prompt: str, complexity: str = "medium") -> tuple:
+    """Evaluate Manim code for errors and fix them if found."""
+    try:
+        # Create prompt object for context
+        prompt_obj = AnimationPrompt(description=prompt, complexity=complexity)
+        
+        # Run evaluation through the agent
+        evaluation_result = evaluation_agent.run_sync(
+            f"Evaluate this Manim code for the prompt: {prompt}",
+            deps=prompt_obj,
+            code=code
+        )
+        
+        # Check if we got a proper evaluation result
+        if isinstance(evaluation_result, EvaluationResult):
+            if evaluation_result.has_errors and evaluation_result.fixed_code:
+                return evaluation_result.fixed_code, format_evaluation_results(evaluation_result)
+            elif evaluation_result.has_errors:
+                # If no fixed code was provided but errors exist, try direct fixing
+                prompt_ctx = RunContext(deps=prompt_obj)
+                fixed_code = fix_code_issues(
+                    prompt_ctx, 
+                    code, 
+                    evaluation_result.syntax_errors,
+                    {
+                        "positioning_issues": evaluation_result.positioning_issues,
+                        "overlap_issues": evaluation_result.overlap_issues,
+                        "suggestions": evaluation_result.suggestions
+                    }
+                )
+                return fixed_code, format_evaluation_results(evaluation_result)
+            else:
+                # No errors found
+                return code, "## Code Evaluation\n\nNo errors or positioning issues found. Code looks good!"
+        
+        # Fallback to direct evaluation if agent result isn't an EvaluationResult
+        return direct_evaluate_and_fix(code, prompt, complexity)
+    
+    except Exception as e:
+        logger.error(f"Error during code evaluation: {e}")
+        # If evaluation fails, return the original code
+        return code, f"## Error During Evaluation\n\nCould not complete code evaluation: {str(e)}"
+
+def direct_evaluate_and_fix(code: str, prompt: str, complexity: str = "medium") -> tuple:
+    """Direct implementation of code evaluation and fixing without using agents."""
+    try:
+        response = client.chat.completions.create(
+            model=llm,
+            messages=[
+                {"role": "system", "content": """
+Evaluate this Manim code for errors and positioning issues. Look for:
+1. Python syntax errors
+2. Manim-specific errors (incorrect class usage, invalid animation methods)
+3. Positioning issues (elements without explicit positioning)
+4. Potential element overlaps
+5. Timing and animation flow issues
+
+If you find any issues, fix them and return both an evaluation report and the fixed code.
+If no issues are found, say so and return the original code.
+
+Format your response as:
+```evaluation
+[List all issues found with explanations]
+```
+
+```python
+[The fixed code or original code if no issues]
+```
+"""
+                },
+                {"role": "user", "content": f"Evaluate this Manim code:\n\n```python\n{code}\n```\n\nThe animation is about: '{prompt}' with complexity level '{complexity}'.\n\nCheck for errors and positioning issues, especially element overlaps."}
+            ]
+        )
+        
+        content = response.choices[0].message.content
+        
+        # Extract evaluation report
+        evaluation_report = ""
+        if "```evaluation" in content:
+            evaluation_parts = content.split("```evaluation", 1)[1].split("```", 1)
+            if len(evaluation_parts) > 0:
+                evaluation_report = evaluation_parts[0].strip()
+        
+        # Extract fixed code
+        fixed_code = code  # Default to original code
+        if "```python" in content:
+            code_parts = content.split("```python", 1)[1].split("```", 1)
+            if len(code_parts) > 0:
+                potential_fixed_code = code_parts[0].strip()
+                # Only use the fixed code if it's valid (contains basic Manim imports)
+                if "from manim import" in potential_fixed_code or "import manim" in potential_fixed_code:
+                    fixed_code = potential_fixed_code
+        
+        # Format the evaluation report
+        if evaluation_report:
+            formatted_report = f"## Code Evaluation\n\n{evaluation_report}\n\n"
+            if fixed_code != code:
+                formatted_report += "Issues were found and fixed in the code."
+            return fixed_code, formatted_report
+        else:
+            return fixed_code, "## Code Evaluation\n\nNo significant issues found in the code."
+    
+    except Exception as e:
+        logger.error(f"Error during direct evaluation: {e}")
+        return code, f"## Error During Evaluation\n\nCould not complete code evaluation: {str(e)}"
+
+def format_evaluation_results(result: EvaluationResult) -> str:
+    """Format evaluation results for display."""
+    output = "## Code Evaluation Results\n\n"
+    
+    if not result.has_errors:
+        output += "✅ No errors or positioning issues detected. Code looks good!\n\n"
+        return output
+    
+    if result.syntax_errors:
+        output += "### Syntax Errors\n\n"
+        for i, error in enumerate(result.syntax_errors):
+            output += f"{i+1}. {error}\n"
+        output += "\n"
+    
+    if result.positioning_issues:
+        output += "### Positioning Issues\n\n"
+        for i, issue in enumerate(result.positioning_issues):
+            output += f"{i+1}. {issue}\n"
+        output += "\n"
+    
+    if result.overlap_issues:
+        output += "### Potential Element Overlaps\n\n"
+        for i, issue in enumerate(result.overlap_issues):
+            output += f"{i+1}. {issue}\n"
+        output += "\n"
+    
+    if result.suggestions:
+        output += "### Suggestions for Improvement\n\n"
+        for i, suggestion in enumerate(result.suggestions):
+            output += f"{i+1}. {suggestion}\n"
+        output += "\n"
+    
+    if result.fixed_code:
+        output += "✅ These issues have been automatically fixed in the updated code.\n"
+    else:
+        output += "❌ Could not automatically fix all issues. Please review the code manually.\n"
+    
+    return output
 
 # Replace the Gradio interface creation with a Blocks interface for better layout control
 if __name__ == "__main__":
@@ -707,6 +1477,17 @@ if __name__ == "__main__":
                             label="Your Feedback"
                         )
                         refine_btn = gr.Button("Apply Feedback", variant="secondary")
+                    
+                    # Add the missing "Evaluate Code" tab
+                    with gr.TabItem("Evaluate Code"):
+                        gr.Markdown("""
+                        Check your Manim code for:
+                        - Syntax errors
+                        - Positioning issues
+                        - Element overlaps
+                        - Animation flow problems
+                        """)
+                        evaluate_btn = gr.Button("Check Code for Errors", variant="secondary")
                 
                 # Code editor (common to both tabs)
                 code_output = gr.Code(
@@ -766,6 +1547,23 @@ if __name__ == "__main__":
             )
             return video_path, log, new_history
         
+        def evaluate_and_update_chat(code, history):
+            # Extract prompt from memory
+            prompt = memory.history[-1]["prompt"] if memory.history else "Mathematical animation"
+            complexity = "medium"  # Default complexity
+            
+            # Evaluate the code
+            fixed_code, evaluation_report = evaluate_and_fix_manim_code(code, prompt, complexity)
+            
+            new_history = update_chat_history(
+                history, 
+                "**Request:** Check code for errors and positioning issues", 
+                f"**Evaluation complete**", 
+                None
+            )
+            
+            return fixed_code, evaluation_report, new_history
+        
         # Connect the components to the function
         generate_btn.click(
             fn=generate_and_update_chat,
@@ -785,6 +1583,12 @@ if __name__ == "__main__":
             outputs=[video_output, log_output, chat_history]
         )
         
+        evaluate_btn.click(
+            fn=evaluate_and_update_chat,
+            inputs=[code_output, chat_history],
+            outputs=[code_output, log_output, chat_history]
+        )
+        
         # Add footer with social media links
         with gr.Row(equal_height=True):
             gr.Markdown("""
@@ -798,4 +1602,5 @@ if __name__ == "__main__":
             """)
     
     demo.launch(server_name="0.0.0.0", server_port=7860)
+
 
