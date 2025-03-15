@@ -665,8 +665,28 @@ def render_animation(code: str, quality="medium_quality") -> str:
 
 def render_manim_video(code, quality="medium_quality"):
     try:
-        temp_dir = tempfile.mkdtemp()
-        script_path = os.path.join(temp_dir, "manim_script.py")
+        # Detect if we're running on Hugging Face
+        is_huggingface = os.environ.get("SPACE_ID") is not None
+        
+        # Use appropriate temp and output directories based on the environment
+        if is_huggingface:
+            base_temp = "/tmp"
+            output_dir = "/tmp/videos"  # Use /tmp for HF Spaces
+        else:
+            base_temp = os.path.join(os.getcwd(), "tmp")
+            output_dir = os.path.join(os.getcwd(), "videos")
+        
+        # Ensure directories exist with proper permissions
+        os.makedirs(base_temp, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Use a short random ID instead of the default long path from mkdtemp
+        import uuid
+        short_id = str(uuid.uuid4())[:8]  # Use only first 8 chars of UUID
+        temp_dir = os.path.join(base_temp, short_id)
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        script_path = os.path.join(temp_dir, "script.py")
         
         with open(script_path, "w") as f:
             f.write(code)
@@ -721,11 +741,10 @@ def render_manim_video(code, quality="medium_quality"):
         
         video_file = max([os.path.join(scene_dir, quality_dir, f) for f in mp4_files], key=os.path.getctime)
         
-        output_dir = os.path.join(os.getcwd(), "generated_videos")
-        os.makedirs(output_dir, exist_ok=True)
-        
-        timestamp = int(time.time())
-        output_file = os.path.join(output_dir, f"manim_video_{timestamp}.mp4")
+        # Use a shorter filename format with timestamp
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%m%d%H%M")
+        output_file = os.path.join(output_dir, f"vid_{timestamp}_{short_id}.mp4")
         
         shutil.copy2(video_file, output_file)
         
@@ -738,7 +757,9 @@ def render_manim_video(code, quality="medium_quality"):
         return f"Error: {str(e)}"
     finally:
         try:
-            shutil.rmtree(temp_dir)
+            # Clean up temporary directory if it exists
+            if 'temp_dir' in locals() and os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
         except Exception as e:
             logger.error(f"Error cleaning up temporary directory: {e}")
 
@@ -1167,7 +1188,7 @@ ELEMENT POSITIONING AND SPACING:
 7. Shrink elements to 80% size when needed with scale(0.8)
 
 STEP-BY-STEP ANIMATION FLOW:
-1. CRITICAL: Use self.play(FadeOut(element)) to explicitly remove elements when done with them
+1. CRITICAL: Use self.play(FadeOut(element)) to explicitly remove elements when they're no longer needed
 2. DO NOT use self.clear() as it doesn't actually remove elements from the scene
 3. Divide the animation into clear sequences with comments like "# Step 1: Introduction"
 4. Use appropriate wait times: self.wait(0.7) for minor steps, self.wait(1.5) for new concepts
@@ -1437,6 +1458,18 @@ def format_evaluation_results(result: EvaluationResult) -> str:
 
 # Replace the Gradio interface creation with a Blocks interface for better layout control
 if __name__ == "__main__":
+    # Create shorter directory names for temp and output files
+    # Check if we're running on Hugging Face
+    is_huggingface = os.environ.get("SPACE_ID") is not None
+    
+    # Use appropriate directories based on environment
+    if is_huggingface:
+        # Use /tmp directory for HF Spaces which has write permissions
+        os.makedirs("/tmp/videos", exist_ok=True)
+    else:
+        os.makedirs(os.path.join(os.getcwd(), "tmp"), exist_ok=True)
+        os.makedirs(os.path.join(os.getcwd(), "videos"), exist_ok=True)
+    
     with gr.Blocks(title="Manimation Generator", theme=gr.themes.Base()) as demo:
         gr.Markdown("# Manimation Generator")
         gr.Markdown("Generate mathematical animations from text descriptions using AI")
