@@ -1,113 +1,239 @@
 """
-Rendering functionality for Manim animations.
+Manim rendering utilities for the Manimation application.
 """
-
 import os
 import subprocess
-import shutil
+import tempfile
 import uuid
+import shutil
 import logging
-from datetime import datetime
-
+import re
+import inspect
 from config import get_output_directories, QUALITY_SETTINGS
 
+# Set up logging
 logger = logging.getLogger(__name__)
+
+def check_latex_installation():
+    """Check if LaTeX is properly installed and configured"""
+    try:
+        result = subprocess.run(
+            ["latex", "--version"], 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=5
+        )
+        return result.returncode == 0
+    except Exception:
+        # If there's an error, assume LaTeX is not properly installed
+        return False
+
+def preprocess_manim_code(code):
+    """
+    Preprocess Manim code to avoid common errors.
+    
+    Args:
+        code (str): Original Manim code
+        
+    Returns:
+        str: Preprocessed code
+    """
+    # Fix dimension mismatches in array operations
+    # Look for common patterns like color arrays or positioning
+    
+    # 1. Fix RGB color definitions that might cause broadcast errors
+    # Replace RGB(a, b) with RGB(a, b, 0) to ensure 3D vectors
+    code = re.sub(r'RGB\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)', r'RGB(\1, \2, 0)', code)
+    
+    # 2. Fix array operations with dimension mismatches
+    # This is a simplified fix - in practice you would need more sophisticated analysis
+    # Look for np.array operations with 2D arrays that might be combined with 3D arrays
+    code = re.sub(r'np\.array\(\[([^]]+),\s*([^]]+)\]\)', r'np.array([\1, \2, 0])', code)
+    
+    # 3. Handle LaTeX-related issues by providing fallbacks for text
+    # If we detect LaTeX issues in the environment, replace LaTeX with Text
+    if not check_latex_installation():
+        # Replace Tex and MathTex with Text when possible
+        code = re.sub(r'Tex\(r"([^"]+)"\)', r'Text("\1")', code)
+        code = re.sub(r'MathTex\(r"([^"]+)"\)', r'Text("\1")', code)
+    
+    return code
+
+def extract_scene_name(code):
+    """
+    Extract the name of the Scene class from the code.
+    
+    Args:
+        code (str): Manim Python code
+        
+    Returns:
+        str: Name of the Scene class or None if not found
+    """
+    # Use regex to find class definitions that inherit from Scene
+    scene_pattern = r'class\s+(\w+)\s*\(\s*Scene\s*\)'
+    match = re.search(scene_pattern, code)
+    
+    if match:
+        return match.group(1)
+    return None
 
 def render_manim_video(code, quality="medium_quality"):
     """
-    Render Manim code into a video.
+    Render Manim code to a video file.
     
     Args:
-        code (str): The Manim code to render
-        quality (str): The quality level (low_quality, medium_quality, high_quality)
+        code (str): Manim Python code to render
+        quality (str): Video quality (low_quality, medium_quality, high_quality)
         
     Returns:
-        str: Path to the output video or error message
+        str: Path to the rendered video file or None if rendering failed
     """
+    if not code or not isinstance(code, str):
+        logger.error(f"Invalid code provided: {type(code)}")
+        return None
+    
+    # Preprocess the code to avoid common errors
+    processed_code = preprocess_manim_code(code)
+    
+    # Get output directories from config
+    dirs = get_output_directories()
+    video_dir = dirs["video_dir"]
+    temp_dir = dirs["temp_dir"]
+    
+    # Create a unique ID for this rendering
+    render_id = str(uuid.uuid4().hex)[:8]
+    
+    # Create a dedicated directory for this render
+    render_dir = os.path.join(temp_dir, render_id)
+    os.makedirs(render_dir, exist_ok=True)
+    
+    # Define the script filename - Manim uses this name for output directories
+    script_filename = "scene.py"
+    script_path = os.path.join(render_dir, script_filename)
+    
+    # Write the code to the script file
+    with open(script_path, "w", encoding="utf-8") as f:
+        f.write(processed_code)
+    
+    # Extract the scene name from the code
+    scene_name = extract_scene_name(processed_code)
+    if not scene_name:
+        logger.error("Could not find a Scene class in the provided code")
+        return None
+    
+    # Get quality settings
+    quality_settings = QUALITY_SETTINGS.get(quality, QUALITY_SETTINGS["medium_quality"])
+    quality_flag = quality_settings["flag"]
+    quality_dir = quality_settings["dir"]
+    
+    # Add environment variable to skip MiKTeX update check
+    env = os.environ.copy()
+    env["MIKTEX_ADMIN_NO_UPDATE_CHECK"] = "1"
+    
+    # Ensure the output video directory exists
+    os.makedirs(video_dir, exist_ok=True)
+    
+    # Create the output video filename
+    output_video = os.path.join(video_dir, f"{render_id}.mp4")
+    
+    # Manim command with explicit output file
+    cmd = [
+        "manim",
+        script_path,
+        scene_name,
+        quality_flag,
+        "-o", output_video,  # Specify output file directly when possible
+        "-v", "DEBUG"        # Use DEBUG level to see more output for troubleshooting
+    ]
+    
+    logger.info(f"Rendering with command: {' '.join(cmd)}")
+    logger.info(f"Working directory: {render_dir}")
+    logger.info(f"Expected output: {output_video}")
+    
     try:
-        # Get appropriate directories
-        base_temp, output_dir = get_output_directories()
-        
-        # Use a short random ID instead of the default long path from mkdtemp
-        short_id = str(uuid.uuid4())[:8]  # Use only first 8 chars of UUID
-        temp_dir = os.path.join(base_temp, short_id)
-        os.makedirs(temp_dir, exist_ok=True)
-        
-        script_path = os.path.join(temp_dir, "script.py")
-        
-        with open(script_path, "w", encoding="utf-8") as f:
-            f.write(code)
-        
-        # Extract class name from code
-        class_name = None
-        for line in code.split("\n"):
-            if line.startswith("class ") and "Scene" in line:
-                class_name = line.split("class ")[1].split("(")[0].strip()
-                break
-            
-        if not class_name:
-            return "Error: Could not identify the Scene class in the generated code."
-        
-        # Get quality settings
-        quality_settings = QUALITY_SETTINGS.get(
-            quality, 
-            QUALITY_SETTINGS["medium_quality"]
+        # Run the command in the render directory
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=env,
+            cwd=render_dir
         )
+        stdout, stderr = process.communicate()
         
-        # Build the manim command
-        command = ["manim", quality_settings["flag"], script_path, class_name]
-        quality_dir = quality_settings["dir"]
+        # Log the full output for debugging
+        if stdout:
+            logger.info(f"Manim stdout: {stdout}")
+        if stderr:
+            logger.error(f"Manim stderr: {stderr}")
         
-        logger.info(f"Executing command: {' '.join(command)}")
+        # Check if the process was successful
+        if process.returncode != 0:
+            logger.error(f"Manim execution failed with return code: {process.returncode}")
+            
+            # Create a simple error video if rendering fails
+            return None
         
-        # Run the command
-        result = subprocess.run(command, cwd=temp_dir, capture_output=True, text=True)
+        # Check for direct output file first
+        if os.path.exists(output_video):
+            logger.info(f"Found output video at specified path: {output_video}")
+            return output_video
         
-        logger.info(f"Manim stdout: {result.stdout}")
-        logger.error(f"Manim stderr: {result.stderr}")
+        # Look for the video in Manim's standard output structure
+        # Manim typically creates files in: media/videos/[script_name_without_extension]/[quality]/[scene_name].mp4
+        script_name_without_ext = os.path.splitext(script_filename)[0]
         
-        if result.returncode != 0:
-            logger.error(f"Manim execution failed: {result.stderr}")
-            return f"Error rendering video: {result.stderr}"
+        # List of possible paths where Manim might have created the video
+        possible_paths = [
+            # Standard Manim path (filename based)
+            os.path.join(render_dir, "media", "videos", script_name_without_ext, quality_dir),
+            # Alternative path with scene name
+            os.path.join(render_dir, "media", "videos", scene_name, quality_dir),
+            # Some versions might put it directly in media/videos
+            os.path.join(render_dir, "media", "videos", quality_dir),
+            # Or in videos/
+            os.path.join(render_dir, "videos", quality_dir),
+            # Last resort - any media directory
+            os.path.join(render_dir, "media")
+        ]
         
-        # Find the output video
-        media_dir = os.path.join(temp_dir, "media")
-        videos_dir = os.path.join(media_dir, "videos")
+        # Search for any MP4 files in possible locations
+        for path in possible_paths:
+            if os.path.exists(path):
+                logger.info(f"Checking directory: {path}")
+                
+                # Look for .mp4 files
+                if os.path.isdir(path):
+                    video_files = [f for f in os.listdir(path) if f.endswith(".mp4")]
+                    if video_files:
+                        source_video = os.path.join(path, video_files[0])
+                        logger.info(f"Found video file: {source_video}")
+                        
+                        # Copy to output location
+                        shutil.copy2(source_video, output_video)
+                        logger.info(f"Successfully copied video to: {output_video}")
+                        return output_video
         
-        if not os.path.exists(videos_dir):
-            return "Error: No video was generated. Check if Manim is installed correctly."
+        # If we get here, do a full recursive search for any MP4 files
+        logger.info("Performing full recursive search for MP4 files")
+        for root, _, files in os.walk(render_dir):
+            for file in files:
+                if file.endswith(".mp4"):
+                    source_video = os.path.join(root, file)
+                    logger.info(f"Found video in recursive search: {source_video}")
+                    
+                    # Copy to output location
+                    shutil.copy2(source_video, output_video)
+                    logger.info(f"Successfully copied video to: {output_video}")
+                    return output_video
         
-        scene_dirs = [d for d in os.listdir(videos_dir) if os.path.isdir(os.path.join(videos_dir, d))]
-        
-        if not scene_dirs:
-            return "Error: No scene directory found in the output."
-        
-        scene_dir = max([os.path.join(videos_dir, d) for d in scene_dirs], key=os.path.getctime)
-        
-        mp4_files = [f for f in os.listdir(os.path.join(scene_dir, quality_dir)) if f.endswith(".mp4")]
-        
-        if not mp4_files:
-            return "Error: No MP4 file was generated."
-        
-        video_file = max([os.path.join(scene_dir, quality_dir, f) for f in mp4_files], key=os.path.getctime)
-        
-        # Use a shorter filename format with timestamp
-        timestamp = datetime.now().strftime("%m%d%H%M")
-        output_file = os.path.join(output_dir, f"vid_{timestamp}_{short_id}.mp4")
-        
-        shutil.copy2(video_file, output_file)
-        
-        logger.info(f"Video generated: {output_file}")
-        
-        return output_file
+        logger.error("No video files found after rendering")
+        return None
         
     except Exception as e:
-        logger.error(f"Error rendering video: {e}")
-        return f"Error: {str(e)}"
-    finally:
-        try:
-            # Clean up temporary directory if it exists
-            if 'temp_dir' in locals() and os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir)
-        except Exception as e:
-            logger.error(f"Error cleaning up temporary directory: {e}")
+        logger.error(f"Error during rendering: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return None

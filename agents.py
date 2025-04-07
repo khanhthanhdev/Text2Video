@@ -61,7 +61,7 @@ def create_agents():
         ),
     )
     
-    # Add dynamic system prompts
+        # Add dynamic system prompts
     @manim_agent.system_prompt
     def add_complexity_guidance(ctx: RunContext[AnimationPrompt]) -> str:
         """Add guidance based on requested complexity."""
@@ -130,26 +130,11 @@ def create_agents():
                 "Balance between checking for technical errors and verifying good animation principles. "
                 "Ensure elements are properly spaced and animations follow a logical step-by-step flow."
             )
-    
-    # Add tool functions to agents
-    from tools import extract_scenario_direct, generate_code_direct
-    
-    @manim_agent.tool
-    def extract_scenario(ctx: RunContext[AnimationPrompt]) -> AnimationScenario:
-        """Extract a structured animation scenario from a text prompt."""
-        prompt = ctx.deps
-        # Use the extract_scenario_direct tool from tools.py
-        return extract_scenario_direct(prompt.description, prompt.complexity)
-    
-    @manim_agent.tool
-    def generate_code(ctx: RunContext[AnimationPrompt], scenario: AnimationScenario) -> str:
-        """Generate Manim code from a structured scenario."""
-        prompt = ctx.deps
-        # Use the generate_code_direct tool from tools.py
-        return generate_code_direct(prompt.description, scenario, prompt.complexity)
-    
+
     return {
         "manim_agent": manim_agent,
         "layout_agent": layout_agent, 
         "evaluation_agent": evaluation_agent
     }
+
+

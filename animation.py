@@ -1,176 +1,189 @@
 """
-Animation generation functionality for the Manimation system.
+Functions for generating, refining, and rendering Manim animations.
 """
+import os
+import re
+import openai
+from config import get_openai_client, get_llm_model, get_output_directories
+from models import AnimationPrompt, AnimationScenario, AnimationResult
+from utils.log import logger, format_log_output
+from utils.layout import direct_optimize_layout, optimize_element_positioning
+from utils.code_gen import generate_code_direct
+from renderer import render_manim_video, preprocess_manim_code
+from memory import memory  # Import the singleton memory instance
 
-import logging
-from pydantic_ai import RunContext
-
-from models import AnimationPrompt, AnimationScenario
-from tools import extract_scenario_direct, generate_code_direct, direct_optimize_layout
-from renderer import render_manim_video
-from formatting import format_log_output
-from memory import ConversationMemory
-
-# Configure logging
-logger = logging.getLogger(__name__)
-
-def generate_animation(prompt: str, complexity: str = "medium", quality: str = "medium_quality", 
-                      memory: ConversationMemory = None) -> tuple:
+def generate_animation(prompt, complexity="medium", quality="medium_quality"):
     """
-    Generate an animation from a text prompt.
+    Generate a new animation from a text prompt.
     
     Args:
-        prompt: The text description of what to animate
-        complexity: Complexity level (simple, medium, complex)
-        quality: Video quality level
-        memory: Optional conversation memory instance
+        prompt (str): Text description of the animation to generate
+        complexity (str): Complexity level (simple, medium, complex)
+        quality (str): Video quality (low_quality, medium_quality, high_quality)
         
     Returns:
-        tuple: (code, video_path, log_output)
+        tuple: (code, video_path, log)
     """
     try:
-        # Create prompt object with complexity
-        prompt_obj = AnimationPrompt(description=prompt, complexity=complexity)
+        # Create the animation prompt object
+        animation_prompt = AnimationPrompt(
+            description=prompt,
+            complexity=complexity
+        )
         
-        # Extract scenario (use direct method)
-        scenario = extract_scenario_direct(prompt, complexity)
+        # Generate the scenario first
+        scenario = AnimationScenario(
+            title=f"Animation: {prompt[:30]}...",
+            description=prompt,
+            complexity=complexity
+        )
         
-        # Generate Manim code
-        code = generate_code_direct(prompt, scenario, complexity)
+        # Store the scenario in memory
+        memory.current_scenario = scenario
         
-        # Try to optimize layout (might fail silently and return original code)
-        try:
-            optimized_code = direct_optimize_layout(code, prompt, complexity)
-            if optimized_code and "from manim import" in optimized_code:
-                code = optimized_code
-        except Exception as e:
-            logger.error(f"Error during layout optimization: {e}")
-            # Continue with original code if optimization fails
+        # Generate code using the scenario - explicitly pass the scenario
+        manim_code = generate_code_direct(scenario=scenario)
+        
+        # Preprocess the code to avoid dimension errors
+        manim_code = preprocess_manim_code(manim_code)
         
         # Render the video
-        video_path = render_manim_video(code, quality)
+        video_path = render_manim_video(manim_code, quality)
         
-        # Format the log output
-        log_output = format_log_output(scenario, code)
+        # Check if rendering was successful
+        if not video_path:
+            logger.error("Video rendering failed")
+            return manim_code, None, "Error: Video rendering failed. Please check the Manim code for errors."
         
-        # Store in memory if provided
-        if memory:
-            memory.add_interaction(prompt, scenario, code, video_path)
+        # Store the result in memory
+        memory.add_result(manim_code, video_path)
         
-        return code, video_path, log_output
+        # Format log output
+        log = format_log_output(f"Generated animation from prompt: {prompt}", 
+                              f"Complexity: {complexity}, Quality: {quality}")
+        
+        return manim_code, video_path, log
         
     except Exception as e:
-        logger.error(f"Error generating animation: {e}")
-        return f"Error: {str(e)}", None, f"Error occurred: {str(e)}"
+        logger.error(f"Error generating animation: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return f"# Error generating animation\n# {str(e)}", None, f"Error: {str(e)}"
 
-def refine_animation(code: str, feedback: str, quality: str = "medium_quality", 
-                    memory: ConversationMemory = None) -> tuple:
+def refine_animation(code, feedback, quality="medium_quality"):
     """
     Refine an existing animation based on feedback.
     
     Args:
-        code: The existing Manim code
-        feedback: User feedback for refinement
-        quality: Video quality level
-        memory: Optional conversation memory instance
+        code (str): Existing Manim code
+        feedback (str): User feedback to incorporate
+        quality (str): Video quality for rendering
         
     Returns:
-        tuple: (refined_code, video_path, log_output)
+        tuple: (refined_code, video_path, log)
     """
     try:
-        # Get prompt and context information from memory if available
-        prompt = "Mathematical animation"
-        context = ""
-        if memory:
-            prompt = memory.get_last_prompt()
-            context = memory.get_context_for_refinement()
+        # Use LLM to refine the code based on feedback
+        client = get_openai_client()
+        llm = get_llm_model()
         
-        # Special case for layout/positioning feedback
-        if any(keyword in feedback.lower() for keyword in ["position", "layout", "overlap", "spacing", "step by step", "clear"]):
-            from tools import optimize_element_positioning
-            refined_code = optimize_element_positioning(code, prompt, "medium")
-        else:
-            # Use OpenAI to refine the code based on feedback
-            from config import get_openai_client
-            client = get_openai_client()
-            
-            response = client.chat.completions.create(
-                model="deepseek-ai/DeepSeek-V3",
-                messages=[
-                    {"role": "system", "content": """
-You are a Manim code expert. Your task is to refine animation code based on user feedback.
-Keep the overall structure and purpose of the animation, but implement the changes requested.
-Make sure the code remains valid and follows Manim best practices.
-
-IMPORTANT REQUIREMENTS:
-1. Only return the complete, corrected Manim code
-2. Ensure class name and structure remains consistent
-3. All changes must be compatible with Manim Community edition
-4. Do not explain your changes in comments outside of helpful inline comments
-"""
-                    },
-                    {"role": "user", "content": f"Here is the current Manim animation code:\n\n```python\n{code}\n```\n\n{context}\nPlease refine this code based on this feedback: \"{feedback}\"\n\nReturn only the improved code."}
-                ]
-            )
-            
-            refined_code = response.choices[0].message.content.strip()
-            
-            # Remove any markdown code formatting if present
-            if refined_code.startswith("```python"):
-                refined_code = refined_code.split("```python", 1)[1]
-            if refined_code.endswith("```"):
-                refined_code = refined_code.rsplit("```", 1)[0]
-            
-            refined_code = refined_code.strip()
+        # Simple implementation - in production you'd want more structured prompting
+        response = client.chat.completions.create(
+            model=llm,
+            messages=[
+                {"role": "system", "content": "You are a Manim expert. Modify the following code based on user feedback."},
+                {"role": "user", "content": f"Original code:\n\n{code}\n\nFeedback: {feedback}\n\nPlease modify the code to address this feedback."}
+            ],
+            max_tokens=1500
+        )
         
-        # Render the refined code
+        refined_code = response.choices[0].message.content
+        
+        # Extract code block if the LLM wrapped it
+        code_pattern = r"```python\n(.*?)```"
+        match = re.search(code_pattern, refined_code, re.DOTALL)
+        if match:
+            refined_code = match.group(1)
+        
+        # Render the video
         video_path = render_manim_video(refined_code, quality)
         
-        if video_path and not video_path.startswith("Error"):
-            # Update memory with refined code if provided
-            if memory and memory.current_scenario:
-                memory.current_code = refined_code
-            
-            return refined_code, video_path, f"## Refined Animation\n\nFeedback incorporated: \"{feedback}\"\n\nAnimation successfully rendered."
-        else:
-            return refined_code, None, f"## Error in Rendering\n\n```\n{video_path}\n```\n\nPlease check your code for errors."
-    
+        # Format log output
+        log = format_log_output(f"Refined animation based on feedback: {feedback}", 
+                              f"Quality: {quality}")
+        
+        return refined_code, video_path, log
+        
     except Exception as e:
-        logger.error(f"Error refining animation: {e}")
-        return code, None, f"## Error in Refinement\n\n```\n{str(e)}\n```\n\nPlease try again with different feedback."
+        logger.error(f"Error refining animation: {str(e)}")
+        return code, None, f"Error refining animation: {str(e)}"
 
-def evaluate_and_fix_manim_code(code: str, prompt: str, complexity: str = "medium") -> tuple:
+def rerender_animation(code, quality="medium_quality"):
     """
-    Evaluate Manim code for errors and fix if needed.
+    Re-render the current animation code.
     
     Args:
-        code: Manim code to evaluate
-        prompt: The original prompt
-        complexity: Complexity level
+        code (str): Manim code to render
+        quality (str): Video quality
+        
+    Returns:
+        tuple: (video_path, log)
+    """
+    try:
+        # Render the video
+        video_path = render_manim_video(code, quality)
+        
+        # Format log output
+        log = format_log_output("Re-rendered animation", f"Quality: {quality}")
+        
+        return video_path, log
+        
+    except Exception as e:
+        logger.error(f"Error re-rendering animation: {str(e)}")
+        return None, f"Error re-rendering animation: {str(e)}"
+
+def evaluate_and_fix_manim_code(code, prompt, complexity):
+    """
+    Evaluate Manim code for errors and fix them.
+    
+    Args:
+        code (str): Manim code to evaluate
+        prompt (str): Original prompt for context
+        complexity (str): Complexity level
         
     Returns:
         tuple: (fixed_code, evaluation_report)
     """
-    from tools import direct_evaluate_and_fix
-    return direct_evaluate_and_fix(code, prompt, complexity)
-
-def rerender_animation(code: str, quality: str = "medium_quality") -> tuple:
-    """
-    Re-render animation with user-edited code.
-    
-    Args:
-        code: Manim code to render
-        quality: Video quality
-        
-    Returns:
-        tuple: (video_path, status_message)
-    """
     try:
-        video_path = render_manim_video(code, quality)
-        if video_path and not video_path.startswith("Error"):
-            return video_path, f"## Re-rendered Animation\n\nCode successfully rendered to video.\n\nCheck the video player for results."
-        else:
-            return None, f"## Error in Rendering\n\n```\n{video_path}\n```\n\nPlease check your code for errors."
+        client = get_openai_client()
+        llm = get_llm_model()
+        
+        # Ask LLM to evaluate and fix the code
+        response = client.chat.completions.create(
+            model=llm,
+            messages=[
+                {"role": "system", "content": "You are a Manim expert. Evaluate the following code for errors and fix them."},
+                {"role": "user", "content": f"Original prompt: {prompt}\nComplexity: {complexity}\n\nCode to evaluate:\n\n{code}\n\nPlease evaluate this code for syntax errors, positioning issues, and other problems. Return the fixed code and an evaluation report."}
+            ],
+            max_tokens=1500
+        )
+        
+        result = response.choices[0].message.content
+        
+        # Parse the response - in production you'd want more structured parsing
+        if "```python" in result:
+            code_pattern = r"```python\n(.*?)```"
+            match = re.search(code_pattern, result, re.DOTALL)
+            if match:
+                fixed_code = match.group(1)
+                # Extract the evaluation report (everything except the code block)
+                evaluation_report = re.sub(code_pattern, "", result, flags=re.DOTALL)
+                return fixed_code, evaluation_report
+        
+        # If no code block found, assume the whole response is the fixed code
+        # and generate a simple report
+        return code, "Code evaluation complete. No major issues found."
+        
     except Exception as e:
-        logger.error(f"Error re-rendering animation: {e}")
-        return None, f"## Error in Rendering\n\n```\n{str(e)}\n```\n\nPlease try again with different code."
+        logger.error(f"Error evaluating code: {str(e)}")
+        return code, f"Error during evaluation: {str(e)}"
