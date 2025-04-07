@@ -1,7 +1,6 @@
 """
 Configuration settings and shared utilities for the Manimation project.
 """
-
 import os
 import openai
 import tempfile
@@ -18,6 +17,23 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
+# Default model to use
+DEFAULT_MODEL = "deepseek-ai/DeepSeek-V3"
+
+AVAILABLE_MODELS = {
+    "llama3": "meta-llama/Llama-3.1-8B-Instruct-Turbo",
+    "deepseek": "deepseek-ai/DeepSeek-V3",
+    "mixtral": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+}
+
+AVAILABLE_PROVIDER = {
+    "TogetherAI": "https://api.together.xyz/v1",
+    "HuggingFace": "https://api-inference.huggingface.co/models",
+    "Groq": "https://api.groq.com/v1",
+    "Replicate": "https://api.replicate.com/v1",
+    "OpenAI": "https://api.openai.com/v1",
+}
+
 # Configure OpenAI client to use Together API
 def get_openai_client():
     """Get configured OpenAI client using Together API."""
@@ -28,14 +44,32 @@ def get_openai_client():
     return client
 
 # Define available models
-AVAILABLE_MODELS = {
-    "llama3": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-    "deepseek": "deepseek-ai/DeepSeek-V3",
-    "mixtral": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+
+# Quality settings
+QUALITY_SETTINGS = {
+    "low_quality": {"flag": "-ql", "dir": "480p15"},
+    "medium_quality": {"flag": "-qm", "dir": "720p30"},
+    "high_quality": {"flag": "-qh", "dir": "1080p60"}
 }
 
-# Default model to use
-DEFAULT_MODEL = AVAILABLE_MODELS["deepseek"]
+# Video output directory settings
+def get_output_directories():
+    # Detect if we're running on Hugging Face
+    is_huggingface = os.environ.get("SPACE_ID") is not None
+    
+    # Use appropriate temp and output directories based on the environment
+    if is_huggingface:
+        base_temp = "/tmp"
+        output_dir = "/tmp/videos"  # Use /tmp for HF Spaces
+    else:
+        base_temp = os.path.join(os.getcwd(), "tmp")
+        output_dir = os.path.join(os.getcwd(), "videos")
+    
+    # Ensure directories exist with proper permissions
+    os.makedirs(base_temp, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    return base_temp, output_dir
 
 # Shared utility for rendering manim videos
 def render_manim_video(code, quality="medium_quality"):
@@ -50,7 +84,8 @@ def render_manim_video(code, quality="medium_quality"):
         str: Path to the rendered video file or error message
     """
     try:
-        temp_dir = tempfile.mkdtemp()
+        base_temp, output_dir = get_output_directories()
+        temp_dir = tempfile.mkdtemp(dir=base_temp)
         script_path = os.path.join(temp_dir, "manim_script.py")
         
         with open(script_path, "w") as f:
@@ -65,15 +100,9 @@ def render_manim_video(code, quality="medium_quality"):
         if not class_name:
             return "Error: Could not identify the Scene class in the generated code."
         
-        if quality == "high_quality":
-            command = ["manim", "-qh", script_path, class_name]
-            quality_dir = "1080p60"
-        elif quality == "low_quality":
-            command = ["manim", "-ql", script_path, class_name]
-            quality_dir = "480p15"
-        else:
-            command = ["manim", "-qm", script_path, class_name]
-            quality_dir = "720p30"
+        quality_flag = QUALITY_SETTINGS[quality]["flag"]
+        quality_dir = QUALITY_SETTINGS[quality]["dir"]
+        command = ["manim", quality_flag, script_path, class_name]
         
         logger.info(f"Executing command: {' '.join(command)}")
         
@@ -105,9 +134,6 @@ def render_manim_video(code, quality="medium_quality"):
             return "Error: No MP4 file was generated."
         
         video_file = max([os.path.join(scene_dir, quality_dir, f) for f in mp4_files], key=os.path.getctime)
-        
-        output_dir = os.path.join(os.getcwd(), "generated_videos")
-        os.makedirs(output_dir, exist_ok=True)
         
         timestamp = int(time.time())
         output_file = os.path.join(output_dir, f"manim_video_{timestamp}.mp4")

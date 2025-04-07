@@ -1,7 +1,6 @@
 """
 AI Agent for generating Manim animations from text prompts using pydantic-ai.
 """
-
 import os
 from typing import List, Optional
 from dotenv import load_dotenv
@@ -21,7 +20,8 @@ from io import StringIO
 import re
 import json
 import logging
-    
+from models import AnimationPrompt, AnimationScenario, AnimationResult, LayoutConfiguration, EvaluationResult
+from config import get_openai_client, get_output_directories, render_manim_video
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -688,7 +688,7 @@ def render_manim_video(code, quality="medium_quality"):
         
         script_path = os.path.join(temp_dir, "script.py")
         
-        with open(script_path, "w") as f:
+        with open(script_path, "w", encoding="utf-8") as f:
             f.write(code)
         
         class_name = None
